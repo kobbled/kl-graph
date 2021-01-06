@@ -15,4 +15,10 @@ declare_member(class_name,is_neighbor,class_name,neigb)
 ROUTINE is_neighbor(nde : INTEGER; neighbor : INTEGER) : BOOLEAN FROM class_name
 declare_member(class_name,list_neighbors,class_name,lstn)
 ROUTINE list_neighbors(nde : INTEGER) : ARRAY OF INTEGER FROM class_name
+declare_member(class_name,DFS,class_name,dfs)
+-- start_node = 0 will perform on entire graph
+ROUTINE DFS(start_node : INTEGER ; pth : PATH nodedata = t_INTEGER) FROM class_name
+declare_member(class_name,BFS,class_name,bfs)
+ROUTINE BFS(start_node : INTEGER ; goal : INTEGER; queue : PATH nodedata = t_INTEGER ; & 
+            pth : PATH nodedata = t_INTEGER) FROM class_name
 %endif --end header

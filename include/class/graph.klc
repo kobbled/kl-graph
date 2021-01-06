@@ -81,6 +81,33 @@ ROUTINE append_adj
 
   END append_adj
 
+ROUTINE DFSUtil
+  VAR
+    i : INTEGER
+    status : INTEGER
+    adj : weight_edge
+  BEGIN
+    vistd[nde].v = TRUE
+    --add to path
+    APPEND_NODE(out_pth, status)
+    out_pth[PATH_LEN(out_pth)].v = nde
+
+    i = 1
+    adj = grph[nde].adj[i]
+    WHILE (NOT UNINIT(adj[1])) DO
+      IF (vistd[adj[1]].v = FALSE) THEN
+        DFSUtil((adj[1]), grph, vistd, out_pth)
+      ENDIF
+
+      i = i + 1
+      IF i > ARRAY_LEN(grph[nde].adj) THEN
+        RETURN
+      ENDIF
+
+      adj = grph[nde].adj[i]
+    ENDWHILE
+  END DFSUtil
+
 -- public
 
 ROUTINE new
@@ -162,6 +189,100 @@ ROUTINE list_neighbors
 
     RETURN(neighbors)
   END list_neighbors
+
+ROUTINE DFS
+  VAR
+    i : INTEGER
+  BEGIN
+    reset_visited
+
+    IF start_node > 0 THEN
+      IF start_node > PATH_LEN(this) THEN
+        karelError(INVALID_INDEX,'node ' + i_to_s(start_node) + ' is not in graph.', ER_ABORT)
+      ENDIF
+
+      IF (NOT visited[start_node].v) THEN
+        DFSUtil(start_node, this, visited, pth)
+      ENDIF
+      
+    ELSE
+
+      FOR i=1 TO PATH_LEN(this) DO
+        IF (NOT visited[i].v) THEN
+          DFSUtil(i, this, visited, pth)
+        ENDIF
+      ENDFOR
+    
+    ENDIF
+
+    -- return(out_pth)
+
+  END DFS
+
+ROUTINE BFS
+  VAR
+    i : INTEGER
+    v : INTEGER
+    adj : weight_edge
+    status : INTEGER
+  BEGIN
+    IF UNINIT(start_node) OR (start_node = 0) THEN start_node = 1 ; ENDIF 
+
+    reset_visited
+    --clear queue
+    i = PATH_LEN(queue)
+    WHILE PATH_LEN(queue) > 0 DO
+		  DELETE_NODE(queue,i,status)
+      CHK_STAT(status)
+      i = i - 1
+	  ENDWHILE
+
+
+    visited[start_node].v = TRUE
+    --push first node onto queue
+    APPEND_NODE(queue,status)
+    queue[PATH_LEN(queue)].v = start_node
+
+    REPEAT
+      --next node from queue
+      v = queue[1].v
+      DELETE_NODE(queue,1,status)
+
+      --add to path list
+      APPEND_NODE(pth, status)
+      pth[PATH_LEN(pth)].v = v
+
+      --if reach goal abort
+      IF (v=goal) THEN
+        RETURN
+      ENDIF
+
+      --get neighbors of the popped node
+      i = 1
+      adj = this[v].adj[1]
+      REPEAT
+        --if adjacent node has not been visited 
+        --add to queue
+        IF (NOT visited[ adj[1] ].v) THEN
+          visited[ adj[1] ].v = TRUE
+          --push node on queue
+          APPEND_NODE(queue,status)
+          queue[PATH_LEN(queue)].v = (adj[1])
+        ENDIF
+
+        i = i + 1
+        IF i > ARRAY_LEN(this[v].adj) THEN
+          karelError(INVALID_INDEX,'increase MAX-NEIGHBORS in class_name', ER_ABORT)
+        ENDIF
+
+        adj = this[v].adj[i]
+      --repeat until adjacency list is null
+      UNTIL(UNINIT(adj[1]) )
+
+    -- repeat until queue is empty
+    UNTIL(PATH_LEN(queue) = 0)
+
+  END BFS
 
 BEGIN
 END class_name
