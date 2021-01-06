@@ -1,0 +1,167 @@
+PROGRAM class_name
+%NOBUSYLAMP
+%COMMENT = 'graph class'
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+
+
+%include systemlib.klt
+path_default_types
+
+--define graph types
+%include graph.klt
+--user graph type
+graph_type_define
+
+%include errors.klt
+
+VAR
+  this : PATH pathheader = hdr_graph, nodedata = t_graph
+  visited : PATH nodedata = t_BOOL
+
+%include errors.klh
+%from strings.klh %import i_to_s
+%include graph.klh
+
+%include graph.klh
+%include graph.private.klh
+
+--private
+
+ROUTINE clear_graph
+  VAR
+    i : INTEGER
+    status : INTEGER
+  BEGIN
+    i = PATH_LEN(this)
+    WHILE PATH_LEN(this) > 0 DO
+		  DELETE_NODE(this,i,status)
+      CHK_STAT(status)
+      i = i - 1
+	  ENDWHILE
+  END clear_graph
+
+ROUTINE clear_visited
+  VAR
+    i : INTEGER
+    status : INTEGER
+  BEGIN
+    i = PATH_LEN(visited)
+    WHILE PATH_LEN(visited) > 0 DO
+		  DELETE_NODE(visited,i,status)
+      CHK_STAT(status)
+      i = i - 1
+	  ENDWHILE
+  END clear_visited
+
+ROUTINE reset_visited
+  VAR
+    i : INTEGER
+  BEGIN
+    FOR i=1 TO PATH_LEN(visited) DO
+      visited[i].v = FALSE
+    ENDFOR
+  END reset_visited
+
+ROUTINE append_adj
+  VAR
+    i : INTEGER
+    adj : weight_edge
+  BEGIN
+    FOR i=1 TO ARRAY_LEN(this[nde].adj) DO
+      adj = this[nde].adj[i]
+      IF (UNINIT(adj[1])) THEN
+        this[nde].adj[i,1] = neighbor ; this[nde].adj[i,2] = edge_weight ;
+        RETURN ;
+      ENDIF
+    ENDFOR
+
+    -- no free slot in adjacency list
+    karelError(INVALID_INDEX,'class_name node ' + i_to_s(nde) + ' adjacency list is full.', ER_ABORT)
+
+  END append_adj
+
+-- public
+
+ROUTINE new
+  VAR
+    i : INTEGER
+    status : INTEGER
+  BEGIN
+    clear_graph
+    clear_visited
+
+    FOR i=1 TO no_of_verts DO
+      APPEND_NODE(this,status)
+      CHK_STAT(status)
+      --add visited node
+      APPEND_NODE(visited,status)
+      visited[i].v = FALSE
+      CHK_STAT(status)
+    ENDFOR
+
+    --add header information
+    this.directional = directional
+  END new
+
+ROUTINE addEdge
+  BEGIN
+    IF (u > PATH_LEN(this)) THEN
+      karelError(INVALID_INDEX,'class_name node ' + i_to_s(u) + ' does not exist.', ER_ABORT)
+    ENDIF
+    IF (v > PATH_LEN(this)) THEN
+      karelError(INVALID_INDEX,'class_name node ' + i_to_s(v) + ' does not exist.', ER_ABORT)
+    ENDIF
+
+    append_adj(u, v, wt)
+    --directional graph
+    IF NOT this.directional THEN
+      append_adj(v, u, wt)
+    ENDIF
+
+  END addEdge
+
+ROUTINE is_neighbor
+  VAR
+    i : INTEGER
+    adj : weight_edge
+  BEGIN
+    i = 1
+    FOR i=1 TO ARRAY_LEN(this[nde].adj) DO
+      adj = this[nde].adj[i]
+      IF (UNINIT(adj[1])) THEN
+        RETURN(FALSE)
+      ENDIF
+
+      IF adj[1] = neighbor THEN
+        RETURN(TRUE)
+      ENDIF
+    ENDFOR
+
+    RETURN(FALSE)
+  END is_neighbor
+
+ROUTINE list_neighbors
+  VAR
+    neighbors : ARRAY[MAX_NEIGHBORS] OF INTEGER
+    i : INTEGER
+    adj : weight_edge
+  BEGIN
+    i = 1
+    adj = this[nde].adj[i]
+    WHILE (NOT UNINIT(adj[1])) DO
+      neighbors[i] = this[nde].adj[i,1]
+
+      i = i + 1
+      IF i > ARRAY_LEN(this[nde].adj) THEN
+        RETURN(neighbors)
+      ENDIF
+
+      adj = this[nde].adj[i]
+    ENDWHILE
+
+    RETURN(neighbors)
+  END list_neighbors
+
+BEGIN
+END class_name

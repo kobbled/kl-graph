@@ -1,0 +1,18 @@
+--header
+%include header_guard.m
+--oop
+%include namespace.m
+
+--start header file
+header_if -- ifndef class
+header_def -- define class
+
+declare_member(class_name,new,class_name,new)
+ROUTINE new(no_of_verts : INTEGER; directional : BOOLEAN) FROM class_name
+declare_member(class_name,addEdge,class_name,edgad)
+ROUTINE addEdge(u, v : INTEGER; wt : INTEGER) FROM class_name
+declare_member(class_name,is_neighbor,class_name,neigb)
+ROUTINE is_neighbor(nde : INTEGER; neighbor : INTEGER) : BOOLEAN FROM class_name
+declare_member(class_name,list_neighbors,class_name,lstn)
+ROUTINE list_neighbors(nde : INTEGER) : ARRAY OF INTEGER FROM class_name
+%endif --end header

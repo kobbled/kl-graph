@@ -1,0 +1,14 @@
+--maximum number of adjacencies per node
+%define MAX_NEIGHBORS 5
+
+
+--graph type
+%mode push
+%mode string QQQ "`" "`" "\\"
+%define graph_type_define `TYPE
+  t_graph FROM class_name = STRUCTURE
+    --edges
+    adj : ARRAY[MAX_NEIGHBORS] OF weight_edge
+  ENDSTRUCTURE
+  `
+%mode pop

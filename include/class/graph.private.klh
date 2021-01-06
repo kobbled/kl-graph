@@ -1,0 +1,14 @@
+%ifndef graph_private_h
+%define graph_private_h
+
+--oop
+%include namespace.m
+declare_member(class_name,clear_graph,class_name,cgrh)
+ROUTINE clear_graph FROM class_name
+declare_member(class_name,clear_visited,class_name,cvist)
+ROUTINE clear_visited FROM class_name
+declare_member(class_name,reset_visited,class_name,rvist)
+ROUTINE reset_visited FROM class_name
+declare_member(class_name,append_adj,class_name,aadj)
+ROUTINE append_adj(nde : INTEGER; neighbor : INTEGER; edge_weight : INTEGER) FROM class_name
+%endif --graph_private_h

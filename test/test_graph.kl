@@ -1,0 +1,71 @@
+PROGRAM test_graph
+%NOLOCKGROUP
+
+%include systemlib.klt
+path_default_types
+%include graph.klt
+
+%define class_name tstgph
+%include default_graph.klt
+
+VAR
+  search_path : PATH nodedata = t_INTEGER
+  bfsqueue : PATH nodedata = t_INTEGER
+
+%include kunit.klh
+
+%class tstgph('graph.klc','graph.klh', 'default_graph.klt')
+
+
+ROUTINE clear_search
+  VAR
+    i : INTEGER
+    status : INTEGER
+  BEGIN
+    i = PATH_LEN(search_path)
+    WHILE PATH_LEN(search_path) > 0 DO
+		  DELETE_NODE(search_path,i,status)
+      i = i - 1
+	  ENDWHILE
+  END clear_search
+
+
+--   (1)---10---(2) 
+--    |       /  | \ 3
+--    2    10    7 (5)
+--    |  /       | / 2
+--   (4)----6---(3)
+ROUTINE t_make_graph : BOOLEAN
+  VAR
+    b : ARRAY[2] OF BOOLEAN
+    n : ARRAY[MAX_NEIGHBORS] OF INTEGER
+    exp_n : ARRAY[MAX_NEIGHBORS] OF INTEGER
+  BEGIN
+    tstgph__new(5,FALSE)
+    tstgph__addEdge(1,2,10)
+    tstgph__addEdge(1,4,2)
+    tstgph__addEdge(2,3,7)
+    tstgph__addEdge(2,4,10)
+    tstgph__addEdge(3,4,6)
+    tstgph__addEdge(2,5,3)
+    tstgph__addEdge(5,3,2)
+
+    b[1] = tstgph__is_neighbor(1,2)
+    b[2] = tstgph__is_neighbor(1,3)
+
+    n = tstgph__list_neighbors(2)
+    n[5] = 0
+    --expected neighbors
+    exp_n[1] = 1 ; exp_n[2] = 3 ; exp_n[3] = 4;
+    exp_n[4] = 5 ; exp_n[5] = 0 ;
+
+    RETURN(kunit_assert(b[1]) AND (NOT kunit_assert(b[2])) AND &
+           kunit_eq_ari(exp_n, n) )
+  END t_make_graph
+
+
+BEGIN
+  --total asserts 12
+  kunit_test('create a graph', t_make_graph) --asserts 3
+  kunit_done
+END test_graph
