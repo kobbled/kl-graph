@@ -1,0 +1,21 @@
+PROGRAM graph
+%NOBUSYLAMP
+%COMMENT = 'graph routines'
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+
+%include systemlib.klt
+path_default_types
+
+%include graph.klt
+
+%include graph.private.klh
+%include graph.klh
+
+
+--private
+
+--public
+
+BEGIN
+END graph
