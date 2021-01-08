@@ -1,0 +1,10 @@
+%ifndef graph_h
+%define graph_h
+
+%include namespace.m
+
+%define prog_name graph
+%define prog_name_alias graph
+
+
+%endif -- graph_h

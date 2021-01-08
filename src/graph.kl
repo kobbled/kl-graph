@@ -9,8 +9,8 @@ path_default_types
 
 %include graph.klt
 
-%include graph.private.klh
-%include graph.klh
+%include graph_algo.private.klh
+%include graph_algo.klh
 
 
 --private
