@@ -106,6 +106,7 @@ ROUTINE t_bfs : BOOLEAN
     tstgph__addEdge(5,3,2)
 
     tstgph__BFS(0, 0, bfsqueue, search_path)
+    --bfs 1-2-4-3-5
 
     RETURN(kunit_eq_int(1, (search_path[1].v)) AND kunit_eq_int(2, (search_path[2].v)) AND &
            kunit_eq_int(4, (search_path[3].v)) AND kunit_eq_int(3, (search_path[4].v)) AND &
@@ -119,4 +120,7 @@ BEGIN
   kunit_test('test DFS', t_dfs) --asserts 4
   kunit_test('test BFS', t_bfs) --asserts 5
   kunit_done
+
+  --destruct classes
+  tstgph__destructor
 END test_graph

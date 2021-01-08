@@ -9,6 +9,8 @@ header_def -- define class
 
 declare_member(class_name,new,class_name,new)
 ROUTINE new(no_of_verts : INTEGER; directional : BOOLEAN) FROM class_name
+declare_member(class_name,destructor,class_name,dsct)
+ROUTINE destructor FROM class_name
 declare_member(class_name,addEdge,class_name,edgad)
 ROUTINE addEdge(u, v : INTEGER; wt : INTEGER) FROM class_name
 declare_member(class_name,is_neighbor,class_name,neigb)

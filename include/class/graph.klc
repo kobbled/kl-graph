@@ -21,8 +21,8 @@ VAR
 
 %include errors.klh
 %from strings.klh %import i_to_s
-%include graph.klh
 
+-- graph class members
 %include graph.klh
 %include graph.private.klh
 
@@ -130,6 +130,12 @@ ROUTINE new
     --add header information
     this.directional = directional
   END new
+
+ROUTINE destructor
+  BEGIN
+    clear_graph
+    clear_visited
+  END destructor
 
 ROUTINE addEdge
   BEGIN
