@@ -2,8 +2,6 @@
 %define graph_t
 
 TYPE
-  --assume maximum number of entries at 32727
-  weight_edge = ARRAY[2] OF SHORT
 
   hdr_graph FROM graph = STRUCTURE
     directional : BOOLEAN

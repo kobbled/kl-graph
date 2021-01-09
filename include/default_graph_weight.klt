@@ -1,11 +1,19 @@
 --maximum number of adjacencies per node
 %define MAX_NEIGHBORS 5
 
-%define GRAPH_TYPE t_graph
+%define GRAPH_TYPE t_graph_wt
 %define GRAPH_NODE_NAME id
 %define GRAPH_NODE_TYPE SHORT
 
-%define GRAPH_ADJ_TYPE t_edge
+%define GRAPH_ADJ_TYPE t_edge_wt
+--optional: exclude if not using edge weights
+--must update adjacency type to exclude
+--weights
+%define GRAPH_EDGE_NAME wt
+%define GRAPH_EDGE_TYPE SHORT
+--SHORT and BYTE types must be passed as INTEGER
+--into routines
+%define GRAPH_EDGE_VTYPE INTEGER
 
 
 --graph type
@@ -16,6 +24,7 @@
 %define graph_type_define(parent) `TYPE
   GRAPH_ADJ_TYPE FROM parent = STRUCTURE
     GRAPH_NODE_NAME : GRAPH_NODE_TYPE
+    GRAPH_EDGE_NAME : GRAPH_EDGE_TYPE
   ENDSTRUCTURE
 
   GRAPH_TYPE FROM parent = STRUCTURE
@@ -26,11 +35,12 @@
 
 --MUST DEFINE for creating new nodes
 %define define_new_node(parent) `declare_member(parent,new_node,parent,nnde)
-ROUTINE new_node(id : INTEGER) : GRAPH_ADJ_TYPE
+ROUTINE new_node(id : INTEGER; wt : GRAPH_EDGE_VTYPE) : GRAPH_ADJ_TYPE
   VAR
     nde : GRAPH_ADJ_TYPE
   BEGIN
     nde.GRAPH_NODE_NAME = id ;
+    nde.GRAPH_EDGE_NAME = wt ;
     RETURN( nde )
   END new_node
   `

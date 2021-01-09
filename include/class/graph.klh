@@ -11,9 +11,11 @@ declare_member(class_name,new,class_name,new)
 ROUTINE new(no_of_verts : INTEGER; directional : BOOLEAN) FROM class_name
 declare_member(class_name,destructor,class_name,dsct)
 ROUTINE destructor FROM class_name
-declare_member(class_name,addEdge,class_name,edgad)
-ROUTINE addEdge(u, v : INTEGER; wt : INTEGER) FROM class_name
-declare_member(class_name,is_neighbor,class_name,neigb)
+declare_member(class_name,append,class_name,ande)
+ROUTINE append FROM class_name
+declare_member(class_name,addEdge,class_name,aedg)
+ROUTINE addEdge(parent : GRAPH_ADJ_TYPE; child : GRAPH_ADJ_TYPE) FROM class_name
+declare_member(class_name,is_neighbor,class_name,neig)
 ROUTINE is_neighbor(nde : INTEGER; neighbor : INTEGER) : BOOLEAN FROM class_name
 declare_member(class_name,list_neighbors,class_name,lstn)
 ROUTINE list_neighbors(nde : INTEGER) : ARRAY OF INTEGER FROM class_name

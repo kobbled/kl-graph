@@ -5,8 +5,13 @@ PROGRAM test_graph
 path_default_types
 %include graph.klt
 
-%define class_name tstgph
+--normal graph
 %include default_graph.klt
+graph_type_define(tstgph)
+
+--weighted graph
+%include default_graph_weight.klt
+graph_type_define(tstwt)
 
 VAR
   search_path : PATH nodedata = t_INTEGER
@@ -14,7 +19,16 @@ VAR
 
 %include kunit.klh
 
-%class tstgph('graph.klc','graph.klh', 'default_graph.klt')
+--normal graph
+%class tstgph('graph.klc','graph.klh','default_graph.klt')
+--need to define to add adjacency
+%include default_graph.klt
+define_new_node(tstgph)
+
+--weighted graph
+%class tstwt('graph.klc','graph.klh','default_graph_weight.klt')
+%include default_graph_weight.klt
+define_new_node(tstwt)
 
 
 ROUTINE clear_search
@@ -30,25 +44,30 @@ ROUTINE clear_search
   END clear_search
 
 
---   (1)---10---(2) 
---    |       /  | \ 3
---    2    10    7 (5)
---    |  /       | / 2
---   (4)----6---(3)
+--   (1)-------(2) 
+--    |       / | \ 
+--    |    /    | (5)
+--    |  /      | / 
+--   (4)------(3)
 ROUTINE t_make_graph : BOOLEAN
   VAR
+    i : INTEGER
+    nde : ARRAY[5] OF t_edge
     b : ARRAY[2] OF BOOLEAN
     n : ARRAY[MAX_NEIGHBORS] OF INTEGER
     exp_n : ARRAY[MAX_NEIGHBORS] OF INTEGER
   BEGIN
-    tstgph__new(5,FALSE)
-    tstgph__addEdge(1,2,10)
-    tstgph__addEdge(1,4,2)
-    tstgph__addEdge(2,3,7)
-    tstgph__addEdge(2,4,10)
-    tstgph__addEdge(3,4,6)
-    tstgph__addEdge(2,5,3)
-    tstgph__addEdge(5,3,2)
+    FOR i=1 TO ARRAY_LEN(nde) DO
+      nde[i] = tstgph__new_node(i)
+    ENDFOR
+    tstgph__new(ARRAY_LEN(nde),FALSE)
+    tstgph__addEdge(nde[1], nde[2] )
+    tstgph__addEdge(nde[1], nde[4] )
+    tstgph__addEdge(nde[2], nde[3] )
+    tstgph__addEdge(nde[2], nde[4] )
+    tstgph__addEdge(nde[3], nde[4] )
+    tstgph__addEdge(nde[2], nde[5] )
+    tstgph__addEdge(nde[5], nde[3] )
 
     b[1] = tstgph__is_neighbor(1,2)
     b[2] = tstgph__is_neighbor(1,3)
@@ -70,15 +89,22 @@ ROUTINE t_make_graph : BOOLEAN
 --   |->(3)      (4)
 
 ROUTINE t_dfs : BOOLEAN
+  VAR
+    i : INTEGER
+    nde : ARRAY[4] OF t_edge
   BEGIN
     clear_search
 
-    tstgph__new(4,TRUE)
-    tstgph__addEdge(1,2,0)
-    tstgph__addEdge(1,3,0)
-    tstgph__addEdge(3,1,0)
-    tstgph__addEdge(2,4,0)
-    tstgph__addEdge(4,4,0)
+    FOR i=1 TO ARRAY_LEN(nde) DO
+      nde[i] = tstgph__new_node(i)
+    ENDFOR
+    
+    tstgph__new(ARRAY_LEN(nde),TRUE)
+    tstgph__addEdge(nde[1], nde[2] )
+    tstgph__addEdge(nde[1], nde[3] )
+    tstgph__addEdge(nde[3], nde[1] )
+    tstgph__addEdge(nde[2], nde[4] )
+    tstgph__addEdge(nde[4], nde[4] )
     
     tstgph__DFS(0, search_path)
     --dfs: 1-2-4-3
@@ -87,23 +113,29 @@ ROUTINE t_dfs : BOOLEAN
            kunit_eq_int(4, (search_path[3].v)) AND kunit_eq_int(3, (search_path[4].v)) )
   END t_dfs
 
---   (1)---10---(2) 
---    |       /  | \ 3
---    2    10    7 (5)
---    |  /       | / 2
---   (4)----6---(3)
+--   (1)-------(2) 
+--    |       / | \ 
+--    |    /    | (5)
+--    |  /      | / 
+--   (4)------(3)
 ROUTINE t_bfs : BOOLEAN
+  VAR
+    i : INTEGER
+    nde : ARRAY[5] OF t_edge
   BEGIN
     clear_search
 
-    tstgph__new(5,FALSE)
-    tstgph__addEdge(1,2,10)
-    tstgph__addEdge(1,4,2)
-    tstgph__addEdge(2,3,7)
-    tstgph__addEdge(2,4,10)
-    tstgph__addEdge(3,4,6)
-    tstgph__addEdge(2,5,3)
-    tstgph__addEdge(5,3,2)
+    FOR i=1 TO ARRAY_LEN(nde) DO
+      nde[i] = tstgph__new_node(i)
+    ENDFOR
+    tstgph__new(ARRAY_LEN(nde),FALSE)
+    tstgph__addEdge(nde[1], nde[2] )
+    tstgph__addEdge(nde[1], nde[4] )
+    tstgph__addEdge(nde[2], nde[3] )
+    tstgph__addEdge(nde[2], nde[4] )
+    tstgph__addEdge(nde[3], nde[4] )
+    tstgph__addEdge(nde[2], nde[5] )
+    tstgph__addEdge(nde[5], nde[3] )
 
     tstgph__BFS(0, 0, bfsqueue, search_path)
     --bfs 1-2-4-3-5
@@ -113,6 +145,12 @@ ROUTINE t_bfs : BOOLEAN
            kunit_eq_int(5, (search_path[5].v)) )
 
   END t_bfs
+
+--   (1)---10---(2) 
+--    |       /  | \ 3
+--    2    10    7 (5)
+--    |  /       | / 2
+--   (4)----6---(3)
 
 BEGIN
   --total asserts 12

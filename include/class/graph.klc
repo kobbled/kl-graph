@@ -11,12 +11,12 @@ path_default_types
 --define graph types
 %include graph.klt
 --user graph type
-graph_type_define
+graph_type_define(class_name)
 
 %include errors.klt
 
 VAR
-  this : PATH pathheader = hdr_graph, nodedata = t_graph
+  this : PATH pathheader = hdr_graph, nodedata = GRAPH_TYPE
   visited : PATH nodedata = t_BOOL
 
 %include errors.klh
@@ -66,18 +66,18 @@ ROUTINE reset_visited
 ROUTINE append_adj
   VAR
     i : INTEGER
-    adj : weight_edge
+    adj : GRAPH_ADJ_TYPE
   BEGIN
-    FOR i=1 TO ARRAY_LEN(this[nde].adj) DO
-      adj = this[nde].adj[i]
-      IF (UNINIT(adj[1])) THEN
-        this[nde].adj[i,1] = neighbor ; this[nde].adj[i,2] = edge_weight ;
+    FOR i=1 TO ARRAY_LEN(this[id].adj) DO
+      adj = this[id].adj[i]
+      IF (UNINIT(adj.GRAPH_NODE_NAME)) THEN
+        this[id].adj[i] = data
         RETURN ;
       ENDIF
     ENDFOR
 
     -- no free slot in adjacency list
-    karelError(INVALID_INDEX,'class_name node ' + i_to_s(nde) + ' adjacency list is full.', ER_ABORT)
+    karelError(INVALID_INDEX,'class_name node ' + i_to_s(id) + ' adjacency list is full.', ER_ABORT)
 
   END append_adj
 
@@ -85,7 +85,7 @@ ROUTINE DFSUtil
   VAR
     i : INTEGER
     status : INTEGER
-    adj : weight_edge
+    adj : GRAPH_ADJ_TYPE
   BEGIN
     vistd[nde].v = TRUE
     --add to path
@@ -94,9 +94,9 @@ ROUTINE DFSUtil
 
     i = 1
     adj = grph[nde].adj[i]
-    WHILE (NOT UNINIT(adj[1])) DO
-      IF (vistd[adj[1]].v = FALSE) THEN
-        DFSUtil((adj[1]), grph, vistd, out_pth)
+    WHILE (NOT UNINIT(adj.GRAPH_NODE_NAME)) DO
+      IF (vistd[adj.GRAPH_NODE_NAME].v = FALSE) THEN
+        DFSUtil((adj.GRAPH_NODE_NAME), grph, vistd, out_pth)
       ENDIF
 
       i = i + 1
@@ -119,12 +119,7 @@ ROUTINE new
     clear_visited
 
     FOR i=1 TO no_of_verts DO
-      APPEND_NODE(this,status)
-      CHK_STAT(status)
-      --add visited node
-      APPEND_NODE(visited,status)
-      visited[i].v = FALSE
-      CHK_STAT(status)
+      append
     ENDFOR
 
     --add header information
@@ -137,36 +132,44 @@ ROUTINE destructor
     clear_visited
   END destructor
 
+-- **** MUST BE DEFINED IN TEMPLATE FILE (.klt)
+define_new_node(class_name)
+
 ROUTINE addEdge
   BEGIN
-    IF (u > PATH_LEN(this)) THEN
-      karelError(INVALID_INDEX,'class_name node ' + i_to_s(u) + ' does not exist.', ER_ABORT)
-    ENDIF
-    IF (v > PATH_LEN(this)) THEN
-      karelError(INVALID_INDEX,'class_name node ' + i_to_s(v) + ' does not exist.', ER_ABORT)
-    ENDIF
-
-    append_adj(u, v, wt)
+    append_adj((parent.GRAPH_NODE_NAME), child)
     --directional graph
     IF NOT this.directional THEN
-      append_adj(v, u, wt)
+      append_adj((child.GRAPH_NODE_NAME), parent)
     ENDIF
 
   END addEdge
 
+ROUTINE append
+  VAR
+    status : INTEGER
+  BEGIN
+    APPEND_NODE(this,status)
+    CHK_STAT(status)
+    --add visited node
+    APPEND_NODE(visited,status)
+    visited[PATH_LEN(visited)].v = FALSE
+    CHK_STAT(status)
+  END append
+
 ROUTINE is_neighbor
   VAR
     i : INTEGER
-    adj : weight_edge
+    adj : GRAPH_ADJ_TYPE
   BEGIN
     i = 1
     FOR i=1 TO ARRAY_LEN(this[nde].adj) DO
       adj = this[nde].adj[i]
-      IF (UNINIT(adj[1])) THEN
+      IF (UNINIT(adj.GRAPH_NODE_NAME)) THEN
         RETURN(FALSE)
       ENDIF
 
-      IF adj[1] = neighbor THEN
+      IF adj.GRAPH_NODE_NAME = neighbor THEN
         RETURN(TRUE)
       ENDIF
     ENDFOR
@@ -178,12 +181,12 @@ ROUTINE list_neighbors
   VAR
     neighbors : ARRAY[MAX_NEIGHBORS] OF INTEGER
     i : INTEGER
-    adj : weight_edge
+    adj : GRAPH_ADJ_TYPE
   BEGIN
     i = 1
     adj = this[nde].adj[i]
-    WHILE (NOT UNINIT(adj[1])) DO
-      neighbors[i] = this[nde].adj[i,1]
+    WHILE (NOT UNINIT(adj.GRAPH_NODE_NAME)) DO
+      neighbors[i] = adj.GRAPH_NODE_NAME
 
       i = i + 1
       IF i > ARRAY_LEN(this[nde].adj) THEN
@@ -229,7 +232,7 @@ ROUTINE BFS
   VAR
     i : INTEGER
     v : INTEGER
-    adj : weight_edge
+    adj : GRAPH_ADJ_TYPE
     status : INTEGER
   BEGIN
     IF UNINIT(start_node) OR (start_node = 0) THEN start_node = 1 ; ENDIF 
@@ -265,15 +268,15 @@ ROUTINE BFS
 
       --get neighbors of the popped node
       i = 1
-      adj = this[v].adj[1]
+      adj = this[v].adj[i]
       REPEAT
         --if adjacent node has not been visited 
         --add to queue
-        IF (NOT visited[ adj[1] ].v) THEN
-          visited[ adj[1] ].v = TRUE
+        IF (NOT visited[ adj.GRAPH_NODE_NAME ].v) THEN
+          visited[ adj.GRAPH_NODE_NAME ].v = TRUE
           --push node on queue
           APPEND_NODE(queue,status)
-          queue[PATH_LEN(queue)].v = (adj[1])
+          queue[PATH_LEN(queue)].v = (adj.GRAPH_NODE_NAME)
         ENDIF
 
         i = i + 1
@@ -283,7 +286,7 @@ ROUTINE BFS
 
         adj = this[v].adj[i]
       --repeat until adjacency list is null
-      UNTIL(UNINIT(adj[1]) )
+      UNTIL(UNINIT(adj.GRAPH_NODE_NAME) )
 
     -- repeat until queue is empty
     UNTIL(PATH_LEN(queue) = 0)

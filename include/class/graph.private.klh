@@ -5,15 +5,15 @@
 %include namespace.m
 declare_member(class_name,clear_graph,class_name,cgrh)
 ROUTINE clear_graph FROM class_name
-declare_member(class_name,clear_visited,class_name,cvist)
+declare_member(class_name,clear_visited,class_name,cvis)
 ROUTINE clear_visited FROM class_name
-declare_member(class_name,reset_visited,class_name,rvist)
+declare_member(class_name,reset_visited,class_name,rvis)
 ROUTINE reset_visited FROM class_name
 declare_member(class_name,append_adj,class_name,aadj)
-ROUTINE append_adj(nde : INTEGER; neighbor : INTEGER; edge_weight : INTEGER) FROM class_name
+ROUTINE append_adj(id : INTEGER; data : GRAPH_ADJ_TYPE) FROM class_name
 declare_member(class_name,DFSUtil,class_name,dfsu)
-ROUTINE DFSUtil(nde : INTEGER; grph : PATH pathheader = hdr_graph, nodedata = t_graph; & 
-                   vistd : PATH nodedata = t_BOOL; &
+ROUTINE DFSUtil(nde : INTEGER; grph : PATH pathheader = hdr_graph, nodedata = GRAPH_TYPE ; & 
+                   vistd : PATH nodedata = t_BOOL ; &
                    out_pth : PATH nodedata = t_INTEGER) FROM class_name
 
 %endif --graph_private_h
