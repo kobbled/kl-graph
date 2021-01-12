@@ -16,6 +16,8 @@ ROUTINE DFSUtil(nde : INTEGER; grph : PATH pathheader = hdr_graph, nodedata = GR
                    vistd : PATH nodedata = t_BOOL ; &
                    out_pth : PATH nodedata = t_INTEGER) FROM class_name
 %ifdef INCLUDE_A_STAR
+declare_member(class_name,clear_track,class_name,ctrk)
+ROUTINE clear_track FROM class_name
 declare_member(class_name,reconstruct_path,class_name,rpth)
 ROUTINE reconstruct_path(start_node : INTEGER ; goal : INTEGER; &
                     pth : PATH nodedata = t_INTEGER) FROM class_name

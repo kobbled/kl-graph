@@ -160,8 +160,11 @@ ROUTINE t_dijkstra : BOOLEAN
     i : INTEGER
     nde : ARRAY[9] OF t_edge_wt
     wts : ARRAY[9] OF INTEGER
+    act_pth1 : ARRAY[5] OF INTEGER
+    exp_pth1 : ARRAY[5] OF INTEGER
+    act_pth2 : ARRAY[5] OF INTEGER
+    exp_pth2 : ARRAY[5] OF INTEGER
   BEGIN
-    clear_search
     FOR i=1 TO ARRAY_LEN(nde) DO
       nde[i] = tstwt__new_node(i)
     ENDFOR
@@ -181,20 +184,39 @@ ROUTINE t_dijkstra : BOOLEAN
     tstwt__addEdge(nde[8], nde[2], 11)
     tstwt__addEdge(nde[8], nde[9], 7)
     tstwt__addEdge(nde[8], nde[1], 8)
-
+    
+    --path 1
+    clear_search
     tstwt__dijkstra_search(1, 5, search_path)
+    FOR i=1 TO ARRAY_LEN(act_pth1) DO
+      act_pth1[i] = search_path[i].v
+    ENDFOR
+    --expected path
+    exp_pth1[1] = 1 ; exp_pth1[2] = 8 ; exp_pth1[3] = 7 ;
+    exp_pth1[4] = 6 ; exp_pth1[5] = 5 ;
 
-    RETURN(TRUE)
+    --path 2
+    clear_search
+    tstwt__dijkstra_search(8, 4, search_path)
+    FOR i=1 TO ARRAY_LEN(act_pth2) DO
+      act_pth2[i] = search_path[i].v
+    ENDFOR
+    --expected path
+    exp_pth2[1] = 8 ; exp_pth2[2] = 7 ; exp_pth2[3] = 6 ;
+    exp_pth2[4] = 3 ; exp_pth2[5] = 4 ;
+
+
+    RETURN(kunit_eq_ari(exp_pth1, act_pth1) AND kunit_eq_ari(exp_pth2, act_pth2) )
   END t_dijkstra
 
 
 
 BEGIN
-  --total asserts 12
-  -- kunit_test('create a graph', t_make_graph) --asserts 3
-  -- kunit_test('test DFS', t_dfs) --asserts 4
-  -- kunit_test('test BFS', t_bfs) --asserts 5
-  kunit_test('test dijkstra search', t_dijkstra)
+  --total asserts 14
+  kunit_test('create a graph', t_make_graph) --asserts 3
+  kunit_test('test DFS', t_dfs) --asserts 4
+  kunit_test('test BFS', t_bfs) --asserts 5
+  kunit_test('test dijkstra search', t_dijkstra) --asserts 2
   kunit_done
 
   --destruct classes

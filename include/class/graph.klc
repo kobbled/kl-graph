@@ -136,6 +136,19 @@ ROUTINE DFSUtil
   END DFSUtil
 
 %ifdef INCLUDE_A_STAR
+ROUTINE clear_track
+  VAR
+    i : INTEGER
+    status : INTEGER
+  BEGIN
+    i = PATH_LEN(track)
+    WHILE PATH_LEN(track) > 0 DO
+		  DELETE_NODE(track,i,status)
+      CHK_STAT(status)
+      i = i - 1
+	  ENDWHILE
+  END clear_track
+
 ROUTINE reconstruct_path
   VAR
     current : INTEGER
@@ -181,6 +194,9 @@ ROUTINE destructor
   BEGIN
     clear_graph
     clear_visited
+%ifdef INCLUDE_A_STAR
+    clear_track
+%endif
   END destructor
 
 -- **** MUST BE DEFINED IN TEMPLATE FILE (.klt)
