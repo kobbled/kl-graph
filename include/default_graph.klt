@@ -1,3 +1,4 @@
+%define CONFIG_FILENAME default_graph.klt
 --maximum number of adjacencies per node
 %define MAX_NEIGHBORS 5
 
@@ -25,6 +26,9 @@
   `
 
 --MUST DEFINE for creating new nodes
+%define define_new_node_hdr(parent) `declare_member(parent,new_node,parent,nnde)
+ROUTINE new_node(id : INTEGER) : GRAPH_ADJ_TYPE FROM parent
+`
 %define define_new_node(parent) `declare_member(parent,new_node,parent,nnde)
 ROUTINE new_node(id : INTEGER) : GRAPH_ADJ_TYPE
   VAR
@@ -33,6 +37,22 @@ ROUTINE new_node(id : INTEGER) : GRAPH_ADJ_TYPE
     nde.GRAPH_NODE_NAME = id ;
     RETURN( nde )
   END new_node
+  `
+
+%define define_add_edge_hdr(parent) `declare_member(parent,addEdge,parent,aedg)
+ROUTINE addEdge(prnt_nde : GRAPH_ADJ_TYPE; child_nde : GRAPH_ADJ_TYPE) FROM parent
+`
+%define define_add_edge(parent) `declare_member(parent,addEdge,parent,aedg)
+declare_member(parent,append_adj,parent,aadj)
+ROUTINE addEdge(prnt_nde : GRAPH_ADJ_TYPE; child_nde : GRAPH_ADJ_TYPE)
+  BEGIN
+    append_adj((prnt_nde.GRAPH_NODE_NAME), child_nde)
+    --directional graph
+    IF NOT this.directional THEN
+      append_adj((child_nde.GRAPH_NODE_NAME), prnt_nde)
+    ENDIF
+
+  END addEdge
   `
 
 %mode pop

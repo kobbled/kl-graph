@@ -15,5 +15,10 @@ declare_member(class_name,DFSUtil,class_name,dfsu)
 ROUTINE DFSUtil(nde : INTEGER; grph : PATH pathheader = hdr_graph, nodedata = GRAPH_TYPE ; & 
                    vistd : PATH nodedata = t_BOOL ; &
                    out_pth : PATH nodedata = t_INTEGER) FROM class_name
+%ifdef INCLUDE_A_STAR
+declare_member(class_name,reconstruct_path,class_name,rpth)
+ROUTINE reconstruct_path(start_node : INTEGER ; goal : INTEGER; &
+                    pth : PATH nodedata = t_INTEGER) FROM class_name
+%endif
 
 %endif --graph_private_h

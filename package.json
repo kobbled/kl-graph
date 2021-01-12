@@ -18,6 +18,7 @@
     "errors",
     "Strings",
     "queue",
+    "Hash",
     "ktransw-macros",
     "systemlib"
   ]
