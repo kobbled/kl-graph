@@ -2,7 +2,6 @@ PROGRAM test_graph
 %NOLOCKGROUP
 
 %include systemlib.klt
-path_default_types
 %include graph.klt
 
 --normal graph

@@ -5,7 +5,6 @@ PROGRAM graph
 %NOPAUSE = COMMAND + TPENABLE + ERROR
 
 %include systemlib.klt
-path_default_types
 
 %include graph.klt
 

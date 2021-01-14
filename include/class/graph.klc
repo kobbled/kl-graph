@@ -7,7 +7,6 @@ PROGRAM class_name
 %defeval BASE_CLASSNAME class_name
 
 %include systemlib.klt
-path_default_types
 
 %include errors.klt
 
