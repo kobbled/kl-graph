@@ -1,0 +1,328 @@
+PROGRAM class_name
+%NOBUSYLAMP
+%COMMENT = 'binary tree'
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+
+%defeval BASE_CLASSNAME class_name
+
+%ifeq PRINT_LOG FALSE
+%undef PRINT_LOG
+%endif
+
+%include errors.klt
+%include systemlib.klt
+%include binary_tree.klt
+
+TYPE
+  HDR_BST FROM class_name = STRUCTURE
+    root : INTEGER
+  ENDSTRUCTURE
+
+  T_BST FROM class_name = STRUCTURE
+    left : SHORT
+    right : SHORT
+  ENDSTRUCTURE
+
+VAR
+  this : PATH pathheader = HDR_BST, nodedata = T_BST
+  traverse : PATH nodedata = t_INTEGER
+  current : INTEGER
+
+%include errors.klh
+%include strings.klh
+
+--create sorting object
+define_sorting_obj(BINARY_SORT_NAME,CONFIG_FILENAME)
+
+%defeval class_name BASE_CLASSNAME
+%include binary_tree.klh
+--include user defined members
+define_binary_members(class_name)
+%include binary_tree.private.klh
+
+--private
+
+ROUTINE zero
+  VAR
+    i, status : INTEGER
+  BEGIN
+    FOR i=1 TO PATH_LEN(this) DO
+      this[i].left = 0
+      this[i].right = 0
+    ENDFOR
+
+    this.root = 0
+  END zero
+
+ROUTINE reset_generator
+  VAR
+    i : INTEGER
+    status : INTEGER
+  BEGIN
+    current = 0
+
+    i = PATH_LEN(traverse)
+    WHILE PATH_LEN(traverse) > 0 DO
+		  DELETE_NODE(traverse,i,status)
+      CHK_STAT(status)
+      i = i - 1
+	  ENDWHILE
+  END reset_generator
+
+ROUTINE new_node
+  VAR
+    i, status : INTEGER
+  BEGIN
+    IF idx > PATH_LEN(this) THEN
+      FOR i = PATH_LEN(this) TO idx DO
+        APPEND_NODE(this, status)
+      ENDFOR
+    ENDIF
+
+    this[idx].left = 0
+    this[idx].right = 0
+  END new_node
+
+ROUTINE balanceUtil
+  VAR
+    mid : INTEGER
+    root_nde : INTEGER
+  BEGIN
+    IF strt >= nd THEN
+      RETURN(nd)
+    ENDIF
+
+    mid = TRUNC((strt + nd)/2)
+    IF this.root = 0 THEN
+      this.root = mid
+    ENDIF
+
+    this[mid].left = balanceUtil(strt, mid-1)
+    this[mid].right = balanceUtil(mid+1, nd)
+
+    RETURN(mid)
+
+  END balanceUtil
+
+ROUTINE inorder
+  VAR
+    status : INTEGER
+  BEGIN
+    IF idx > 0 THEN
+      inorder((this[idx].left))
+      APPEND_NODE(traverse, status)
+      traverse[PATH_LEN(traverse)].v = idx
+      inorder((this[idx].right))
+    ENDIF
+  END inorder
+
+ROUTINE preorder
+  VAR
+    status : INTEGER
+  BEGIN
+    IF idx > 0 THEN
+      APPEND_NODE(traverse, status)
+      traverse[PATH_LEN(traverse)].v = idx
+      preorder((this[idx].left))
+      preorder((this[idx].right))
+    ENDIF
+  END preorder
+
+ROUTINE postorder
+  VAR
+    status : INTEGER
+  BEGIN
+    IF idx > 0 THEN
+      preorder((this[idx].left))
+      preorder((this[idx].right))
+      APPEND_NODE(traverse, status)
+      traverse[PATH_LEN(traverse)].v = idx
+    ENDIF
+  END postorder
+
+ROUTINE kthUtil
+  VAR
+    left : INTEGER
+  BEGIN
+    IF root = 0 THEN
+      RETURN(0)
+    ENDIF
+    -- seach left in subtree until you reach the end of a branch
+    IF small_large THEN
+      left = kthUtil((this[root].right), k, small_large)
+    ELSE
+      left = kthUtil((this[root].left), k, small_large)
+    ENDIF
+
+    IF left > 0 THEN
+      RETURN(left)
+    ENDIF
+    
+    --if hit the end of a branch. element is current smallest value
+    k = k - 1
+    IF k = 0 THEN
+      RETURN(root)
+    ENDIF
+
+    --search right subtree if hasn't hit k'th smallest
+    IF small_large THEN
+      RETURN(kthUtil((this[root].left), k, small_large))
+    ELSE
+      RETURN(kthUtil((this[root].right), k, small_large))
+    ENDIF
+
+
+  END kthUtil
+
+--public
+
+ROUTINE clear
+  VAR
+    i : INTEGER
+    status : INTEGER
+  BEGIN
+    i = PATH_LEN(this)
+    WHILE PATH_LEN(this) > 0 DO
+		  DELETE_NODE(this,i,status)
+      CHK_STAT(status)
+      i = i - 1
+	  ENDWHILE
+
+    this.root = 0
+  END clear
+
+ROUTINE insert
+  VAR
+    status : INTEGER
+  BEGIN
+    --return new node index to connect to new node to tree
+    IF parent_idx = 0 THEN
+      new_node(new_idx)
+      RETURN(new_idx)
+    ENDIF
+
+    IF comparator(data[new_idx], data[parent_idx]) = LESS_THAN THEN
+      this[parent_idx].left = insert(new_idx, (this[parent_idx].left), data)
+    ELSE IF comparator(data[new_idx], data[parent_idx]) = GREATER_THAN THEN
+      this[parent_idx].right = insert(new_idx, (this[parent_idx].right), data)
+    ENDIF
+    ENDIF
+
+    -- return parent index when coming out of the recursion
+    -- to connect to parent, grandparent, etc ...
+    RETURN(parent_idx)
+  END insert
+
+-- use for unsorted array
+ROUTINE create
+  VAR
+    i, nxt_i, prev_i : INTEGER
+    status : INTEGER
+  BEGIN
+    clear
+
+    -- set root
+    this.root = start_idx
+    
+    prev_i = 0
+    -- FOR i=0 TO (PATH_LEN(data)-1) DO
+    --   nxt_i = ((start_idx+i-1) MOD PATH_LEN(data)) + 1
+    --   prev_i = insert(nxt_i, prev_i, data)
+    -- ENDFOR
+
+    FOR i=start_idx TO (PATH_LEN(data)) DO
+      prev_i = insert(i, prev_i, data)
+    ENDFOR
+
+    FOR i=start_idx DOWNTO 1 DO
+      prev_i = insert(i, prev_i, data)
+    ENDFOR
+
+    IF UNINIT(this[PATH_LEN(this)].left) AND UNINIT(this[PATH_LEN(this)].right) THEN
+      DELETE_NODE(this, PATH_LEN(this), status)
+    ENDIF
+
+  END create
+
+ROUTINE sort
+  BEGIN
+    --sort using quick sort
+    `BINARY_SORT_NAME`__quicksort(data, 1, PATH_LEN(data), FALSE)
+  END sort
+
+--use for sorted array
+ROUTINE balance
+  VAR
+    ret : INTEGER
+  BEGIN
+    
+    IF PATH_LEN(this) = 0 THEN
+      karelError(INVALID_INDEX,'class_name binary tree is empty', ER_ABORT)
+    ENDIF
+
+    IF UNINIT(this.root) OR (this.root = 0) THEN
+      karelError(VAR_UNINIT,'class_name root index is not set', ER_ABORT)
+    ENDIF
+
+    zero
+    ret = balanceUtil(1, PATH_LEN(this))
+
+  END balance
+
+ROUTINE new_generator
+  BEGIN
+    reset_generator
+
+    SELECT typ OF
+      CASE(IN_ORDER):
+        inorder(this.root)
+      CASE(PRE_ORDER):
+        preorder(this.root)
+      CASE(POST_ORDER):
+        postorder(this.root)
+      ELSE:
+    ENDSELECT
+    
+  END new_generator
+
+ROUTINE next
+  BEGIN
+    current = current + 1
+    RETURN(data[traverse[current].v])
+  END next
+
+ROUTINE print
+  VAR
+    i : INTEGER
+    nde : BINARY_DATA_TYPE
+  BEGIN
+    new_generator(typ)
+
+    WRITE TPDISPLAY(CR)
+    FOR i=1 TO PATH_LEN(traverse) DO
+      nde = next(data)
+      user_print(nde)
+    ENDFOR
+  END print
+
+ROUTINE kthSmallest
+  BEGIN
+    IF UNINIT(this.root) OR (this.root = 0) THEN
+      karelError(VAR_UNINIT,'class_name root index is not set', ER_ABORT)
+    ENDIF
+
+    RETURN(kthUtil(this.root, k, FALSE))
+  END kthSmallest
+
+ROUTINE kthLargest
+  BEGIN
+    IF UNINIT(this.root) OR (this.root = 0) THEN
+      karelError(VAR_UNINIT,'class_name root index is not set', ER_ABORT)
+    ENDIF
+
+    RETURN(kthUtil(this.root, k, TRUE))
+  END kthLargest
+
+BEGIN
+END class_name

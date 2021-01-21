@@ -1,0 +1,59 @@
+%define CONFIG_FILENAME binary_tree_int.klt
+
+%define BINARY_DATA_NAME data
+%define BINARY_DATA_TYPE t_INTEGER
+%define BINARY_VALUE_TYPE INTEGER
+
+%define BINARY_SORT_NAME binsrt
+
+%mode push
+%mode string QQQ "`" "`" "\\"
+
+%define define_binary_headers(parent) `declare_member(parent,comparator,parent,cmpr)
+ROUTINE comparator(l_val : BINARY_DATA_TYPE; r_val : BINARY_DATA_TYPE) : INTEGER FROM parent
+declare_member(parent,user_print,parent,upnt)
+ROUTINE user_print(nde : BINARY_DATA_TYPE) FROM parent
+`
+
+%define define_binary_members(parent) `declare_member(parent,comparator,parent,cmpr)
+--comparator codes in binary_tree.klt
+ROUTINE comparator(l_val : BINARY_DATA_TYPE; r_val : BINARY_DATA_TYPE) : INTEGER
+  BEGIN
+    IF l_val.v > r_val.v THEN
+      RETURN(GREATER_THAN)
+    ENDIF
+    IF l_val.v < r_val.v THEN
+      RETURN(LESS_THAN)
+    ENDIF
+    IF l_val.v = r_val.v THEN
+      RETURN(EQUAL_TO)
+    ENDIF
+
+    RETURN(0)
+  END comparator
+declare_member(parent,user_print,parent,upnt)
+ROUTINE user_print(nde : BINARY_DATA_TYPE)
+  BEGIN
+    WRITE TPDISPLAY(nde.v, ' ')
+  END user_print
+  `
+  
+%mode pop
+
+--for sorting
+%define LISTHEADER 
+%defeval LISTTYPE BINARY_DATA_TYPE
+
+%mode push
+%mode string QQQ "`" "`" "\\"
+%define define_callback `declare_member(class_name,callback,class_name,call)
+ROUTINE callback(nde : LISTTYPE) : BINARY_VALUE_TYPE
+  BEGIN
+    --get euclidean distance
+    RETURN( nde.v )
+  END callback
+  `
+--object for sorting
+%define define_sorting_obj(object_name,cnfg_file) `%class object_name('pathsort.klc','pathsort.klh','cnfg_file')`
+
+%mode pop 

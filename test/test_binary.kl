@@ -1,0 +1,153 @@
+PROGRAM test_binary
+%NOLOCKGROUP
+
+%include systemlib.klt
+%include binary_tree.klt
+
+VAR
+  data : PATH nodedata = t_INTEGER
+
+%include kunit.klh
+%from display.klh %import clear, show
+
+--binary tree object
+%class tstbin('binary_tree.klc', 'binary_tree.klh', 'binary_tree_int.klt')
+define_binary_headers(tstbin)
+
+
+ROUTINE clear_data
+  VAR
+    i : INTEGER
+    status : INTEGER
+  BEGIN
+    i = PATH_LEN(data)
+    WHILE PATH_LEN(data) > 0 DO
+		  DELETE_NODE(data,i,status)
+      i = i - 1
+	  ENDWHILE
+  END clear_data
+
+--       50
+--   30      70
+-- 20  40  60  80
+ROUTINE t_insert : BOOLEAN
+  VAR
+    i, status : INTEGER
+    nde : t_INTEGER
+    exp, act : ARRAY[7] OF INTEGER
+  BEGIN
+    clear_data
+
+    APPEND_NODE(data, status) ; data[1].v = 50 ;
+    APPEND_NODE(data, status) ; data[2].v = 30 ;
+    APPEND_NODE(data, status) ; data[3].v = 20 ;
+    APPEND_NODE(data, status) ; data[4].v = 40 ;
+    APPEND_NODE(data, status) ; data[5].v = 70 ;
+    APPEND_NODE(data, status) ; data[6].v = 60 ;
+    APPEND_NODE(data, status) ; data[7].v = 80 ;
+
+    tstbin__create(1, data)
+
+    tstbin__new_generator(IN_ORDER)
+    FOR i=1 TO ARRAY_LEN(act) DO
+      nde = tstbin__next(data)
+      act[i] = nde.v
+    ENDFOR
+
+    exp[1] = 20 ; exp[2] = 30 ; exp[3] = 40 ; exp[4] = 50 ;
+    exp[5] = 60 ; exp[6] = 70 ; exp[7] = 80 ;
+
+    RETURN(kunit_eq_ari(exp, act))
+
+   END t_insert
+
+
+--After balancing
+--       50
+--   30      70
+-- 20  40  60  80
+ROUTINE t_balance : BOOLEAN
+  VAR
+    i, status : INTEGER
+    nde : t_INTEGER
+    exp1, act1 : ARRAY[7] OF INTEGER
+    exp2, act2 : ARRAY[7] OF INTEGER
+  BEGIN
+    clear_data
+
+    APPEND_NODE(data, status) ; data[1].v = 20 ;
+    APPEND_NODE(data, status) ; data[2].v = 70 ;
+    APPEND_NODE(data, status) ; data[3].v = 30 ;
+    APPEND_NODE(data, status) ; data[4].v = 50 ;
+    APPEND_NODE(data, status) ; data[5].v = 40 ;
+    APPEND_NODE(data, status) ; data[6].v = 80 ;
+    APPEND_NODE(data, status) ; data[7].v = 60 ;
+
+    tstbin__sort(data)
+    tstbin__create(1, data)
+
+    tstbin__new_generator(PRE_ORDER)
+    FOR i=1 TO ARRAY_LEN(act1) DO
+      nde = tstbin__next(data)
+      act1[i] = nde.v
+    ENDFOR
+
+    exp1[1] = 20 ; exp1[2] = 30 ; exp1[3] = 40 ; exp1[4] = 50 ;
+    exp1[5] = 60 ; exp1[6] = 70 ; exp1[7] = 80 ;
+
+    tstbin__balance
+
+    tstbin__new_generator(PRE_ORDER)
+    FOR i=1 TO ARRAY_LEN(act2) DO
+      nde = tstbin__next(data)
+      act2[i] = nde.v
+    ENDFOR
+
+    exp2[1] = 50 ; exp2[2] = 30 ; exp2[3] = 20 ; exp2[4] = 40 ;
+    exp2[5] = 70 ; exp2[6] = 60 ; exp2[7] = 80 ;
+
+    RETURN(kunit_eq_ari(exp1, act1) AND kunit_eq_ari(exp2, act2))
+
+  END t_balance
+
+--        20
+--      8     22
+--   4    12
+--     10   14
+ROUTINE t_kth : BOOLEAN
+  VAR
+    status : INTEGER
+    act1, act2 : INTEGER
+  BEGIN
+    clear_data
+
+    APPEND_NODE(data, status) ; data[1].v = 20 ;
+    APPEND_NODE(data, status) ; data[2].v = 8 ;
+    APPEND_NODE(data, status) ; data[3].v = 22 ;
+    APPEND_NODE(data, status) ; data[4].v = 4 ;
+    APPEND_NODE(data, status) ; data[5].v = 12 ;
+    APPEND_NODE(data, status) ; data[6].v = 10 ;
+    APPEND_NODE(data, status) ; data[7].v = 14 ;
+
+    tstbin__create(1, data)
+
+    act1 = tstbin__kthSmallest(3)
+    act1 = data[act1].v
+
+    act2 = tstbin__kthSmallest(5)
+    act2 = data[act2].v
+
+    RETURN(kunit_eq_int(10, act1) AND kunit_eq_int(14, act2))
+  END t_kth
+
+BEGIN
+  display__clear
+
+  kunit_test('test binary insert', t_insert)
+  kunit_test('balance binary tree', t_balance)
+  kunit_test('kth smallest value', t_kth)
+  kunit_done
+
+
+  display__show
+END test_binary

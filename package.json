@@ -10,15 +10,18 @@
   "includes" : [
     "include",
     "include/class/graph",
+    "include/class/binary_tree"
   ],
   "tests" : [
-    "test/test_graph.kl"
+    "test/test_binary.kl"
   ],
   "depends" : [
     "errors",
     "Strings",
     "queue",
+    "math",
     "Hash",
+    "display",
     "ktransw-macros",
     "systemlib"
   ]
