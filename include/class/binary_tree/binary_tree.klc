@@ -6,23 +6,11 @@ PROGRAM class_name
 
 %defeval BASE_CLASSNAME class_name
 
-%ifeq PRINT_LOG FALSE
-%undef PRINT_LOG
-%endif
-
 %include errors.klt
 %include systemlib.klt
+%include binary_tree.c.klt
+
 %include binary_tree.klt
-
-TYPE
-  HDR_BST FROM class_name = STRUCTURE
-    root : INTEGER
-  ENDSTRUCTURE
-
-  T_BST FROM class_name = STRUCTURE
-    left : SHORT
-    right : SHORT
-  ENDSTRUCTURE
 
 VAR
   this : PATH pathheader = HDR_BST, nodedata = T_BST
@@ -148,7 +136,7 @@ ROUTINE kthUtil
     IF root = 0 THEN
       RETURN(0)
     ENDIF
-    -- seach left in subtree until you reach the end of a branch
+    -- seach left in subtree until you reach a leaf node
     IF small_large THEN
       left = kthUtil((this[root].right), k, small_large)
     ELSE
@@ -159,7 +147,7 @@ ROUTINE kthUtil
       RETURN(left)
     ENDIF
     
-    --if hit the end of a branch. element is current smallest value
+    --if hit a leaf node. element is current smallest value
     k = k - 1
     IF k = 0 THEN
       RETURN(root)
@@ -197,21 +185,21 @@ ROUTINE insert
     status : INTEGER
   BEGIN
     --return new node index to connect to new node to tree
-    IF parent_idx = 0 THEN
+    IF root = 0 THEN
       new_node(new_idx)
       RETURN(new_idx)
     ENDIF
 
-    IF comparator(data[new_idx], data[parent_idx]) = LESS_THAN THEN
-      this[parent_idx].left = insert(new_idx, (this[parent_idx].left), data)
-    ELSE IF comparator(data[new_idx], data[parent_idx]) = GREATER_THAN THEN
-      this[parent_idx].right = insert(new_idx, (this[parent_idx].right), data)
+    IF comparator(data[new_idx], data[root]) = LESS_THAN THEN
+      this[root].left = insert(new_idx, (this[root].left), data)
+    ELSE IF comparator(data[new_idx], data[root]) = GREATER_THAN THEN
+      this[root].right = insert(new_idx, (this[root].right), data)
     ENDIF
     ENDIF
 
     -- return parent index when coming out of the recursion
     -- to connect to parent, grandparent, etc ...
-    RETURN(parent_idx)
+    RETURN(root)
   END insert
 
 -- use for unsorted array

@@ -2,7 +2,7 @@ PROGRAM test_binary
 %NOLOCKGROUP
 
 %include systemlib.klt
-%include binary_tree.klt
+%include binary_tree.c.klt
 
 VAR
   data : PATH nodedata = t_INTEGER
@@ -11,7 +11,7 @@ VAR
 %from display.klh %import clear, show
 
 --binary tree object
-%class tstbin('binary_tree.klc', 'binary_tree.klh', 'binary_tree_int.klt')
+%class tstbin('binary_tree.klc', 'binary_tree.klh', 'default_bintree_int.klt')
 define_binary_headers(tstbin)
 
 

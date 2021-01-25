@@ -10,10 +10,11 @@
   "includes" : [
     "include",
     "include/class/graph",
-    "include/class/binary_tree"
+    "include/class/binary_tree",
   ],
   "tests" : [
-    "test/test_binary.kl"
+    "test/test_graph.kl",
+    "test/test_binary.kl",
   ],
   "depends" : [
     "errors",

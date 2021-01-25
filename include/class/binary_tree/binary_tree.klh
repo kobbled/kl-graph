@@ -10,7 +10,7 @@ header_def -- define class
 declare_member(class_name,clear,class_name,clr)
 ROUTINE clear FROM class_name
 declare_member(class_name,insert,class_name,inst)
-ROUTINE insert(new_idx : INTEGER ; parent_idx : INTEGER ; data : PATH nodedata = BINARY_DATA_TYPE) : INTEGER FROM class_name
+ROUTINE insert(new_idx : INTEGER ; root : INTEGER ; data : PATH nodedata = BINARY_DATA_TYPE) : INTEGER FROM class_name
 declare_member(class_name,create,class_name,crat)
 ROUTINE create(start_idx : INTEGER ; data : PATH nodedata = BINARY_DATA_TYPE) FROM class_name
 declare_member(class_name,sort,class_name,sort)

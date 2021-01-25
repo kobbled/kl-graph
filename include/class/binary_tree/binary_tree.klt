@@ -1,12 +1,14 @@
 %ifndef binary_tree_t
 %define binary_tree_t
-CONST
-  GREATER_THAN = 1
-  LESS_THAN = 2
-  EQUAL_TO = 3
 
-CONST
-  IN_ORDER = 1
-  PRE_ORDER = 2
-  POST_ORDER = 3
+TYPE
+  HDR_BST FROM class_name = STRUCTURE
+    root : INTEGER
+  ENDSTRUCTURE
+
+  T_BST FROM class_name = STRUCTURE
+    left : SHORT
+    right : SHORT
+  ENDSTRUCTURE
+
 %endif --binary_tree_t

@@ -1,0 +1,12 @@
+%ifndef binary_tree_c_t
+%define binary_tree_c_t
+CONST
+  GREATER_THAN = 1
+  LESS_THAN = 2
+  EQUAL_TO = 3
+
+CONST
+  IN_ORDER = 1
+  PRE_ORDER = 2
+  POST_ORDER = 3
+%endif --binary_tree_c_t

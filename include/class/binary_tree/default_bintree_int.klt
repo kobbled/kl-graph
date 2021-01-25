@@ -1,8 +1,8 @@
-%define CONFIG_FILENAME binary_tree_int.klt
+%define CONFIG_FILENAME default_bintree_int.klt
 
-%define BINARY_DATA_NAME data
 %define BINARY_DATA_TYPE t_INTEGER
 %define BINARY_VALUE_TYPE INTEGER
+%define BINARY_NODE_NAME v
 
 %define BINARY_SORT_NAME binsrt
 
