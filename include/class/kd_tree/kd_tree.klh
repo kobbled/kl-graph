@@ -31,6 +31,6 @@ declare_member(class_name,nearest_neighbors,class_name,negk)
 ROUTINE nearest_neighbors(point : KDTREE_DATA_TYPE ; k : INTEGER; &
                          data : PATH nodedata = KDTREE_DATA_TYPE) FROM class_name
 declare_member(class_name,nearest_neighbors_radius,class_name,negr)
-ROUTINE nearest_neighbors_radius(point : KDTREE_DATA_TYPE ; radius : INTEGER; &
+ROUTINE nearest_neighbors_radius(point : KDTREE_DATA_TYPE ; radius : KDTREE_COMPARE_TYPE; &
                          data : PATH nodedata = KDTREE_DATA_TYPE) FROM class_name
 %endif --end header

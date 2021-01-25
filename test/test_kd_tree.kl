@@ -223,15 +223,48 @@ ROUTINE t_NN : BOOLEAN
 
   END t_NN
 
-BEGIN
-  display__clear
+ROUTINE t_NNR : BOOLEAN
+  VAR
+    point : KDTREE_DATA_TYPE
+    radius : REAL
+    status : INTEGER
+    act, exp : ARRAY[3] OF KDTREE_VALUE_TYPE
+  BEGIN
+    clear_data
 
-  kunit_test('test kd tree', t_insert)
-  kunit_test('test kd tree 2', t_insert2)
-  kunit_test('min nodes', t_min)
-  kunit_test('max nodes', t_max)
-  kunit_test('kth nearest neighbor', t_NN)
+    APPEND_NODE(data, status) ; data[1].v = VEC2D(51,75) ;
+    APPEND_NODE(data, status) ; data[2].v = VEC2D(25,40) ;
+    APPEND_NODE(data, status) ; data[3].v = VEC2D(70,70) ;
+    APPEND_NODE(data, status) ; data[4].v = VEC2D(10,30) ;
+    APPEND_NODE(data, status) ; data[5].v = VEC2D(35,90) ;
+    APPEND_NODE(data, status) ; data[6].v = VEC2D(55,1) ;
+    APPEND_NODE(data, status) ; data[7].v = VEC2D(60,80) ;
+    APPEND_NODE(data, status) ; data[8].v = VEC2D(1,10) ;
+    APPEND_NODE(data, status) ; data[9].v = VEC2D(50,50) ;
+
+    tstkd__create(data)
+
+    point.v = VEC2D(60,70)
+    radius = 20
+    tstkd__nearest_neighbors_radius(point, radius, data)
+    tstkd__get_query_arr(data, act)
+
+    exp[1] = VEC2D(70,70) ; exp[2] = VEC2D(60,80) ;
+    exp[3] = VEC2D(51,75)
+
+    RETURN(kunit_eq_arv(exp, act, 0.05) )
+
+  END t_NNR
+
+BEGIN
+
+  -- total asserts 9
+  kunit_test('test kd tree', t_insert) --assert 1
+  kunit_test('test kd tree 2', t_insert2) --assert 1
+  kunit_test('min nodes', t_min) --assert 2
+  kunit_test('max nodes', t_max) --assert 2
+  kunit_test('kth nearest neighbor', t_NN) --assert 2
+  kunit_test('nearest neighbor radius', t_NNR) --assert 1
   kunit_done
 
-  display__show
 END test_kd_tree

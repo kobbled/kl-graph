@@ -14,8 +14,6 @@
     "include/class/kd_tree"
   ],
   "tests" : [
-    "test/test_graph.kl",
-    "test/test_binary.kl",
     "test/test_kd_tree.kl"
   ],
   "depends" : [
