@@ -1,0 +1,431 @@
+PROGRAM class_name
+%NOBUSYLAMP
+%COMMENT = 'kd tree'
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+
+%defeval BASE_CLASSNAME class_name
+
+%include errors.klt
+%include systemlib.klt
+%include binary_tree.c.klt
+
+%include binary_tree.klt
+
+TYPE
+  T_KTQUEUE FROM class_name  = STRUCTURE
+      KDTREE_NODE_NAME : INTEGER
+      value : KDTREE_COMPARE_TYPE
+    ENDSTRUCTURE
+
+VAR
+  this : PATH pathheader = HDR_BST, nodedata = T_BST
+  traverse : PATH nodedata = t_INTEGER
+  current : INTEGER
+  query : PATH nodedata = T_KTQUEUE
+
+%include errors.klh
+%from math.klh %import ceil, manhattan_dist, norm, norm2
+%include kd_tree.klh
+--include user defined members
+define_kd_members(class_name)
+%include kd_tree.private.klh
+
+--private
+
+ROUTINE reset_generator
+  VAR
+    i : INTEGER
+    status : INTEGER
+  BEGIN
+    current = 0
+
+    i = PATH_LEN(traverse)
+    WHILE PATH_LEN(traverse) > 0 DO
+		  DELETE_NODE(traverse,i,status)
+      CHK_STAT(status)
+      i = i - 1
+	  ENDWHILE
+  END reset_generator
+
+ROUTINE clear_query
+  VAR
+    i : INTEGER
+    status : INTEGER
+  BEGIN
+    i = PATH_LEN(query)
+    WHILE PATH_LEN(query) > 0 DO
+		  DELETE_NODE(query,i,status)
+      CHK_STAT(status)
+      i = i - 1
+	  ENDWHILE
+  END clear_query
+
+ROUTINE new_node
+  VAR
+    i, status : INTEGER
+  BEGIN
+    IF idx > PATH_LEN(this) THEN
+      FOR i = PATH_LEN(this)+1 TO idx DO
+        APPEND_NODE(this, status)
+        this[i].left = 0
+        this[i].right = 0
+      ENDFOR
+    ENDIF
+  END new_node
+
+ROUTINE bubblesort
+  VAR
+    i,j : INTEGER
+    n : INTEGER
+    swap : KDTREE_DATA_TYPE
+  BEGIN
+    n = high
+    FOR i=low TO high DO
+      FOR j=low TO n-1 DO
+        IF comparator(list[j], list[j+1], axs) = LESS_THAN THEN
+          swap = (list[j+1])
+          list[j+1] = (list[j])
+          list[j] = swap
+        ENDIF
+      ENDFOR
+      n = n - 1
+    ENDFOR
+  END bubblesort
+
+ROUTINE insert
+  VAR
+    mid : INTEGER
+  BEGIN
+    IF data_start > data_end THEN
+      new_node(data_end)
+      RETURN(0)
+    ENDIF
+
+    bubblesort(data, data_start, data_end, (depth MOD DIMENSIONS) + 1)
+    mid = TRUNC((data_start + data_end)/2)
+
+    IF this.root = 0 THEN
+      this.root = mid
+    ENDIF
+
+    new_node(mid)
+    this[mid].right = insert(data_start, mid-1, depth+1, data)
+    this[mid].left = insert(mid+1, data_end, depth+1, data)
+
+    RETURN(mid)
+
+  END insert
+
+ROUTINE inorder
+  VAR
+    status : INTEGER
+  BEGIN
+    IF idx > 0 THEN
+      inorder((this[idx].left))
+      APPEND_NODE(traverse, status)
+      traverse[PATH_LEN(traverse)].KDTREE_NODE_NAME = idx
+      inorder((this[idx].right))
+    ENDIF
+  END inorder
+
+ROUTINE preorder
+  VAR
+    status : INTEGER
+  BEGIN
+    IF idx > 0 THEN
+      APPEND_NODE(traverse, status)
+      traverse[PATH_LEN(traverse)].KDTREE_NODE_NAME = idx
+      preorder((this[idx].left))
+      preorder((this[idx].right))
+    ENDIF
+  END preorder
+
+ROUTINE postorder
+  VAR
+    status : INTEGER
+  BEGIN
+    IF idx > 0 THEN
+      preorder((this[idx].left))
+      preorder((this[idx].right))
+      APPEND_NODE(traverse, status)
+      traverse[PATH_LEN(traverse)].KDTREE_NODE_NAME = idx
+    ENDIF
+  END postorder
+
+ROUTINE minmaxUtil
+  VAR
+    n1, n2 : INTEGER
+  BEGIN
+    -- evaluate down the left hand side of the tree if current depth
+    -- is the evaluation axis
+    IF (dim = (depth MOD DIMENSIONS) + 1) THEN
+      SELECT mn_mx OF
+        CASE(LESS_THAN):
+          IF this[root].left = 0 THEN RETURN(root) ; ENDIF
+          n1 = minmaxUtil((this[root].left), depth+1, dim, mn_mx, data)
+        ELSE:
+          IF this[root].right = 0 THEN RETURN(root) ; ENDIF
+          n1 = minmaxUtil((this[root].right), depth+1, dim, mn_mx, data)
+      ENDSELECT
+      
+      IF comparator(data[n1], data[root], dim) = mn_mx THEN
+        RETURN(n1)
+      ENDIF
+    ENDIF
+
+    -- If current dimension is different than evaluation axis 
+    -- minimum can be anywhere in this subtree
+    IF this[root].left = 0 THEN
+      n1 = root
+    ELSE
+      n1 = minmaxUtil((this[root].left), depth+1, dim, mn_mx, data)
+    ENDIF
+    IF this[root].right = 0 THEN
+      n2 = root
+    ELSE
+      n2 = minmaxUtil((this[root].right), depth+1, dim, mn_mx, data)
+    ENDIF
+
+    IF comparator(data[n1], data[n2], dim) = mn_mx THEN
+      IF comparator(data[n1], data[root], dim) = mn_mx THEN
+        RETURN(n1)
+      ELSE
+        RETURN(root)
+      ENDIF
+    ELSE
+      IF comparator(data[n2], data[root], dim) = mn_mx THEN
+        RETURN(n2)
+      ELSE
+        RETURN(root)
+      ENDIF
+    ENDIF
+  END minmaxUtil
+
+ROUTINE kNN
+  VAR
+    dist : KDTREE_COMPARE_TYPE
+    i, status : INTEGER
+    inserted : BOOLEAN
+  BEGIN
+    IF (root = 0) THEN
+      RETURN
+    ENDIF
+    IF (NOT inhypersphere(query[1].value, point, data[root], (depth MOD DIMENSIONS)+1)) THEN
+      RETURN
+    ENDIF
+
+    dist = distance(point, data[root])
+    -- append node to query list
+    i = 1
+    inserted = FALSE
+    WHILE((i<=PATH_LEN(query)) AND (NOT inserted)) DO
+      IF dist < query[i].value THEN
+        INSERT_NODE(query, i, status)
+        query[i].KDTREE_NODE_NAME = root
+        query[i].value = dist
+        DELETE_NODE(query, PATH_LEN(query), status)
+        inserted = TRUE
+      ENDIF
+      i = i + 1
+    ENDWHILE
+
+    -- visit subtrees is most promising order:
+    IF comparator(point, data[root], (depth MOD DIMENSIONS)+1) = LESS_THAN THEN
+      kNN((this[root].left), depth+1, point, data)
+      kNN((this[root].right), depth+1, point, data)
+    ELSE
+      kNN((this[root].right), depth+1, point, data)
+      kNN((this[root].left), depth+1, point, data)
+    ENDIF
+
+    RETURN
+
+  END kNN
+
+ROUTINE rNN
+  VAR
+    dist : KDTREE_COMPARE_TYPE
+    i, status : INTEGER
+    inserted : BOOLEAN
+  BEGIN
+    IF (root = 0) THEN
+      RETURN
+    ENDIF
+    IF (NOT inhypersphere(query[1].value, point, data[root], (depth MOD DIMENSIONS)+1)) THEN
+      RETURN
+    ENDIF
+
+    dist = distance(point, data[root])
+    -- append node to query list
+    IF dist <= radius THEN
+      i = 1
+      inserted = FALSE
+      WHILE((i<=PATH_LEN(query)) AND (NOT inserted)) DO
+        IF dist < query[i].value THEN
+          INSERT_NODE(query, i, status)
+          query[i].KDTREE_NODE_NAME = root
+          query[i].value = dist
+          inserted = TRUE
+        ENDIF
+        i = i + 1
+      ENDWHILE
+    ENDIF
+
+    -- visit subtrees is most promising order:
+    IF comparator(point, data[root], (depth MOD DIMENSIONS)+1) = LESS_THAN THEN
+      rNN((this[root].left), depth+1, (radius), point, data)
+      rNN((this[root].right), depth+1, (radius), point, data)
+    ELSE
+      rNN((this[root].right), depth+1, (radius), point, data)
+      rNN((this[root].left), depth+1, (radius), point, data)
+    ENDIF
+
+    RETURN
+
+  END rNN
+
+--public
+
+ROUTINE clear
+  VAR
+    i : INTEGER
+    status : INTEGER
+  BEGIN
+    i = PATH_LEN(this)
+    WHILE PATH_LEN(this) > 0 DO
+		  DELETE_NODE(this,i,status)
+      CHK_STAT(status)
+      i = i - 1
+	  ENDWHILE
+
+    this.root = 0
+  END clear
+
+ROUTINE create
+  VAR
+    ret : INTEGER
+  BEGIN
+    clear
+    ret = insert(1, PATH_LEN(data), 0, data)
+  END create
+
+ROUTINE new_generator
+  BEGIN
+    reset_generator
+
+    SELECT typ OF
+      CASE(IN_ORDER):
+        inorder(this.root)
+      CASE(PRE_ORDER):
+        preorder(this.root)
+      CASE(POST_ORDER):
+        postorder(this.root)
+      ELSE:
+    ENDSELECT
+    
+  END new_generator
+
+ROUTINE next
+  BEGIN
+    current = current + 1
+    RETURN(data[traverse[current].KDTREE_NODE_NAME])
+  END next
+
+ROUTINE print
+  VAR
+    i : INTEGER
+    nde : KDTREE_DATA_TYPE
+  BEGIN
+    new_generator(typ)
+
+    WRITE TPDISPLAY(CR)
+    FOR i=1 TO PATH_LEN(traverse) DO
+      nde = next(data)
+      user_print(nde)
+      WRITE TPDISPLAY(CR)
+    ENDFOR
+  END print
+
+ROUTINE print_query
+  VAR
+    i : INTEGER
+    nde : KDTREE_DATA_TYPE
+  BEGIN
+    WRITE TPDISPLAY(CR)
+    FOR i=1 TO PATH_LEN(query) DO
+      WRITE('p[', query[i].KDTREE_NODE_NAME, ']: ')
+      user_print(data[query[i].KDTREE_NODE_NAME])
+      WRITE(' d: ', query[i].value::5::2)
+      WRITE TPDISPLAY(CR)
+    ENDFOR
+  END print_query
+
+ROUTINE get_query
+  VAR
+    i, status : INTEGER
+  BEGIN
+    FOR i=1 TO PATH_LEN(query) DO
+      APPEND_NODE(out_list, status)
+      out_list[PATH_LEN(out_list)].KDTREE_NODE_NAME = data[query[i].KDTREE_NODE_NAME].KDTREE_NODE_NAME
+    ENDFOR
+  END get_query
+
+ROUTINE get_query_arr
+  VAR
+    i, status : INTEGER
+  BEGIN
+    IF ARRAY_LEN(out_arr) < PATH_LEN(query) THEN
+      karelError(ARR_LEN_MISMATCH,'output array is not large enough to contain query', ER_ABORT)
+    ENDIF
+
+    FOR i=1 TO PATH_LEN(query) DO
+      out_arr[i] = data[query[i].KDTREE_NODE_NAME].KDTREE_NODE_NAME
+    ENDFOR
+  END get_query_arr
+
+ROUTINE findmin
+  BEGIN
+    RETURN(minmaxUtil(this.root, 0, dimension, LESS_THAN, data))
+  END findmin
+
+ROUTINE findmax
+  BEGIN
+    RETURN(minmaxUtil(this.root, 0, dimension, GREATER_THAN, data))
+  END findmax
+
+ROUTINE nearest_neighbors
+  VAR
+    i, status : INTEGER
+  BEGIN
+    clear_query
+    --fill query with kth nodes. Set 1st index for insert
+    FOR i=1 TO k DO
+      APPEND_NODE(query, status)
+      query[i].KDTREE_NODE_NAME = 0
+      query[i].value = 0
+    ENDFOR
+    query[1].value = KDTREE_MAX_DIST
+
+    kNN(this.root, 0, point, data)
+
+  END nearest_neighbors
+
+ROUTINE nearest_neighbors_radius
+  VAR
+    i, status : INTEGER
+  BEGIN
+    clear_query
+    
+    APPEND_NODE(query, status)
+    query[1].KDTREE_NODE_NAME = 0
+    query[1].value = KDTREE_MAX_DIST
+
+    rNN(this.root, 0, (radius), point, data)
+
+    DELETE_NODE(query, PATH_LEN(query), status)
+
+  END nearest_neighbors_radius
+
+BEGIN
+END class_name

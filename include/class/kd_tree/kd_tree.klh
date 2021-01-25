@@ -1,0 +1,36 @@
+--header
+%include header_guard.m
+--oop
+%include namespace.m
+
+--start header file
+header_if -- ifndef class
+header_def -- define class
+
+declare_member(class_name,clear,class_name,clr)
+ROUTINE clear FROM class_name
+declare_member(class_name,create,class_name,crat)
+ROUTINE create(data : PATH nodedata = KDTREE_DATA_TYPE) FROM class_name
+declare_member(class_name,new_generator,class_name,ngen)
+ROUTINE new_generator(typ : INTEGER) FROM class_name
+declare_member(class_name,next,class_name,next)
+ROUTINE next(data : PATH nodedata = KDTREE_DATA_TYPE) : KDTREE_DATA_TYPE FROM class_name
+declare_member(class_name,print,class_name,prnt)
+ROUTINE print(typ : INTEGER; data : PATH nodedata = KDTREE_DATA_TYPE) FROM class_name
+declare_member(class_name,print_query,class_name,prtq)
+ROUTINE print_query(data : PATH nodedata = KDTREE_DATA_TYPE) FROM class_name
+declare_member(class_name,get_query,class_name,gqry)
+ROUTINE get_query(data : PATH nodedata = KDTREE_DATA_TYPE; out_list : PATH nodedata = KDTREE_DATA_TYPE) FROM class_name
+declare_member(class_name,get_query_arr,class_name,gqra)
+ROUTINE get_query_arr(data : PATH nodedata = KDTREE_DATA_TYPE; out_arr : ARRAY OF KDTREE_VALUE_TYPE) FROM class_name
+declare_member(class_name,findmin,class_name,fmin)
+ROUTINE findmin(dimension : INTEGER; data : PATH nodedata = KDTREE_DATA_TYPE) : INTEGER FROM class_name
+declare_member(class_name,findmax,class_name,fmax)
+ROUTINE findmax(dimension : INTEGER; data : PATH nodedata = KDTREE_DATA_TYPE) : INTEGER FROM class_name
+declare_member(class_name,nearest_neighbors,class_name,negk)
+ROUTINE nearest_neighbors(point : KDTREE_DATA_TYPE ; k : INTEGER; &
+                         data : PATH nodedata = KDTREE_DATA_TYPE) FROM class_name
+declare_member(class_name,nearest_neighbors_radius,class_name,negr)
+ROUTINE nearest_neighbors_radius(point : KDTREE_DATA_TYPE ; radius : INTEGER; &
+                         data : PATH nodedata = KDTREE_DATA_TYPE) FROM class_name
+%endif --end header

@@ -1,0 +1,237 @@
+PROGRAM test_kd_tree
+%NOLOCKGROUP
+
+%include systemlib.klt
+%include binary_tree.c.klt
+
+VAR
+  data : PATH nodedata = t_VECTOR
+
+%include kunit.klh
+%from display.klh %import clear, show
+
+--binary tree object
+%class tstkd('kd_tree.klc', 'kd_tree.klh', 'default_kd_vec.klt')
+define_kd_headers(tstkd)
+
+ROUTINE VEC2D(x : REAL; y : REAL) : VECTOR
+  VAR
+    v : VECTOR
+  BEGIN
+    v.x = x; v.y = y; v.z = 0;
+    RETURN(v)
+  END VEC2D
+
+ROUTINE clear_data
+  VAR
+    i : INTEGER
+    status : INTEGER
+  BEGIN
+    i = PATH_LEN(data)
+    WHILE PATH_LEN(data) > 0 DO
+		  DELETE_NODE(data,i,status)
+      i = i - 1
+	  ENDWHILE
+  END clear_data
+
+
+--          (7,2)
+--    (5,4)       (9,6)
+-- (2,3) (4,7)  (8,1)    
+ROUTINE t_insert : BOOLEAN
+  VAR
+    i, status : INTEGER
+    nde : t_VECTOR
+    exp, act : ARRAY[6] OF VECTOR
+  BEGIN
+    clear_data
+
+    APPEND_NODE(data, status) ; data[1].v = VEC2D(7,2) ;
+    APPEND_NODE(data, status) ; data[2].v = VEC2D(5,4) ;
+    APPEND_NODE(data, status) ; data[3].v = VEC2D(9,6) ;
+    APPEND_NODE(data, status) ; data[4].v = VEC2D(4,7) ;
+    APPEND_NODE(data, status) ; data[5].v = VEC2D(8,1) ;
+    APPEND_NODE(data, status) ; data[6].v = VEC2D(2,3) ;
+
+    tstkd__create(data)
+
+    new_generator(PRE_ORDER)
+    FOR i=1 TO ARRAY_LEN(act) DO
+      nde = tstkd__next(data)
+      act[i] = nde.v
+    ENDFOR
+
+    exp[1] = VEC2D(7,2) ; exp[2] = VEC2D(5,4) ; exp[3] = VEC2D(2,3) ; 
+    exp[4] = VEC2D(4,7) ; exp[5] = VEC2D(9,6) ; exp[6] = VEC2D(8,1) ;
+
+
+    RETURN(kunit_eq_arv(exp, act, 0.05) )
+
+   END t_insert
+
+--            (35,45)
+--      (5,25)      (70,70)
+-- (10,12) (30,40)     (50,30)
+
+--               (50,50)
+--        (25,40)      (51,75)
+--   (10,30) (35,90)     (70,70)
+-- (1,10)             (55,1) (60,80)
+ROUTINE t_insert2 : BOOLEAN
+  VAR
+    i, status : INTEGER
+    nde : t_VECTOR
+    exp, act : ARRAY[9] OF VECTOR
+  BEGIN
+    clear_data
+
+    APPEND_NODE(data, status) ; data[1].v = VEC2D(51,75) ;
+    APPEND_NODE(data, status) ; data[2].v = VEC2D(25,40) ;
+    APPEND_NODE(data, status) ; data[3].v = VEC2D(70,70) ;
+    APPEND_NODE(data, status) ; data[4].v = VEC2D(10,30) ;
+    APPEND_NODE(data, status) ; data[5].v = VEC2D(35,90) ;
+    APPEND_NODE(data, status) ; data[6].v = VEC2D(55,1) ;
+    APPEND_NODE(data, status) ; data[7].v = VEC2D(60,80) ;
+    APPEND_NODE(data, status) ; data[8].v = VEC2D(1,10) ;
+    APPEND_NODE(data, status) ; data[9].v = VEC2D(50,50) ;
+
+    tstkd__create(data)
+
+    new_generator(PRE_ORDER)
+    FOR i=1 TO ARRAY_LEN(act) DO
+      nde = tstkd__next(data)
+      act[i] = nde.v
+    ENDFOR
+
+    exp[1] = VEC2D(50,50) ; exp[2] = VEC2D(25,40) ; exp[3] = VEC2D(10,30) ; 
+    exp[4] = VEC2D(1,10) ; exp[5] = VEC2D(35,90) ; exp[6] = VEC2D(51,75) ; 
+    exp[7] = VEC2D(70,70) ; exp[8] = VEC2D(55,1) ; exp[9] = VEC2D(60,80) ;
+
+    RETURN(kunit_eq_arv(exp, act, 0.05) )
+
+   END t_insert2
+
+--               (50,50)
+--        (25,40)      (51,75)
+--   (10,30) (35,90)     (70,70)
+-- (1,10)             (55,1) (60,80)
+ROUTINE t_min : BOOLEAN
+  VAR
+    mn_x, mn_y : INTEGER
+    act1, exp1 : VECTOR
+    act2, exp2 : VECTOR 
+    status : INTEGER
+  BEGIN
+    clear_data
+
+    APPEND_NODE(data, status) ; data[1].v = VEC2D(51,75) ;
+    APPEND_NODE(data, status) ; data[2].v = VEC2D(25,40) ;
+    APPEND_NODE(data, status) ; data[3].v = VEC2D(70,70) ;
+    APPEND_NODE(data, status) ; data[4].v = VEC2D(10,30) ;
+    APPEND_NODE(data, status) ; data[5].v = VEC2D(35,90) ;
+    APPEND_NODE(data, status) ; data[6].v = VEC2D(55,1) ;
+    APPEND_NODE(data, status) ; data[7].v = VEC2D(60,80) ;
+    APPEND_NODE(data, status) ; data[8].v = VEC2D(1,10) ;
+    APPEND_NODE(data, status) ; data[9].v = VEC2D(50,50) ;
+
+    tstkd__create(data)
+
+    mn_x = tstkd__findmin(1, data)
+    act1 = data[mn_x].v
+    exp1 = VEC2D(1,10)
+
+    mn_y = tstkd__findmin(2, data)
+    act2 = data[mn_y].v
+    exp2 = VEC2D(55,1)
+
+    RETURN(kunit_eq_vec(exp1,act1) AND kunit_eq_vec(exp2,act2) )
+
+  END t_min
+
+--               (50,50)
+--        (25,40)      (51,75)
+--   (10,30) (35,90)     (70,70)
+-- (1,10)             (55,1) (60,80)
+ROUTINE t_max : BOOLEAN
+  VAR
+    mx_x, mx_y : INTEGER
+    act1, exp1 : VECTOR
+    act2, exp2 : VECTOR 
+    status : INTEGER
+  BEGIN
+    clear_data
+
+    APPEND_NODE(data, status) ; data[1].v = VEC2D(51,75) ;
+    APPEND_NODE(data, status) ; data[2].v = VEC2D(25,40) ;
+    APPEND_NODE(data, status) ; data[3].v = VEC2D(70,70) ;
+    APPEND_NODE(data, status) ; data[4].v = VEC2D(10,30) ;
+    APPEND_NODE(data, status) ; data[5].v = VEC2D(35,90) ;
+    APPEND_NODE(data, status) ; data[6].v = VEC2D(55,1) ;
+    APPEND_NODE(data, status) ; data[7].v = VEC2D(60,80) ;
+    APPEND_NODE(data, status) ; data[8].v = VEC2D(1,10) ;
+    APPEND_NODE(data, status) ; data[9].v = VEC2D(50,50) ;
+
+    tstkd__create(data)
+
+    mx_x = tstkd__findmax(1, data)
+    act1 = data[mx_x].v
+    exp1 = VEC2D(70,70)
+
+    mx_y = tstkd__findmax(2, data)
+    act2 = data[mx_y].v
+    exp2 = VEC2D(35,90)
+
+    RETURN(kunit_eq_vec(exp1,act1) AND kunit_eq_vec(exp2,act2) )
+
+  END t_max
+
+ROUTINE t_NN : BOOLEAN
+  VAR
+    point : KDTREE_DATA_TYPE
+    status : INTEGER
+    act1, exp1 : ARRAY[2] OF KDTREE_VALUE_TYPE
+    act2, exp2 : ARRAY[3] OF KDTREE_VALUE_TYPE
+  BEGIN
+    clear_data
+
+    APPEND_NODE(data, status) ; data[1].v = VEC2D(51,75) ;
+    APPEND_NODE(data, status) ; data[2].v = VEC2D(25,40) ;
+    APPEND_NODE(data, status) ; data[3].v = VEC2D(70,70) ;
+    APPEND_NODE(data, status) ; data[4].v = VEC2D(10,30) ;
+    APPEND_NODE(data, status) ; data[5].v = VEC2D(35,90) ;
+    APPEND_NODE(data, status) ; data[6].v = VEC2D(55,1) ;
+    APPEND_NODE(data, status) ; data[7].v = VEC2D(60,80) ;
+    APPEND_NODE(data, status) ; data[8].v = VEC2D(1,10) ;
+    APPEND_NODE(data, status) ; data[9].v = VEC2D(50,50) ;
+
+    tstkd__create(data)
+
+    point.v = VEC2D(10,10)
+    tstkd__nearest_neighbors(point, 2, data)
+    tstkd__get_query_arr(data, act1)
+
+    exp1[1] = VEC2D(1,10) ; exp1[2] = VEC2D(10,30)
+
+    point.v = VEC2D(80,30)
+    tstkd__nearest_neighbors(point, 3, data)
+    tstkd__get_query_arr(data, act2)
+
+    exp2[1] = VEC2D(50,50) ; exp2[2] = VEC2D(55,1) ;
+    exp2[3] = VEC2D(70,70)
+
+    RETURN(kunit_eq_arv(exp1, act1, 0.05) AND kunit_eq_arv(exp2, act2, 0.05) )
+
+  END t_NN
+
+BEGIN
+  display__clear
+
+  kunit_test('test kd tree', t_insert)
+  kunit_test('test kd tree 2', t_insert2)
+  kunit_test('min nodes', t_min)
+  kunit_test('max nodes', t_max)
+  kunit_test('kth nearest neighbor', t_NN)
+  kunit_done
+
+  display__show
+END test_kd_tree
