@@ -9,7 +9,7 @@ PROGRAM test_graph
 graph_type_define(tstgph)
 
 --weighted graph
-%include default_graph_weight.klt
+%include default_graph_wt_astar.klt
 graph_type_define(tstwt)
 
 VAR
@@ -22,14 +22,12 @@ VAR
 %class tstgph('graph.klc','graph.klh','default_graph.klt')
 --need to define to add adjacency
 %include default_graph.klt
-define_new_node_hdr(tstgph)
-define_add_edge_hdr(tstgph)
+define_graphs_headers(tstgph)
 
 --weighted graph
-%class tstwt('graph.klc','graph.klh','default_graph_weight.klt')
-%include default_graph_weight.klt
-define_new_node_hdr(tstwt)
-define_add_edge_hdr(tstwt)
+%class tstwt('graph.klc','graph.klh','default_graph_wt_astar.klt')
+%include default_graph_wt_astar.klt
+define_graphs_headers(tstwt)
 
 
 ROUTINE clear_search
@@ -208,16 +206,64 @@ ROUTINE t_dijkstra : BOOLEAN
     RETURN(kunit_eq_ari(exp_pth1, act_pth1) AND kunit_eq_ari(exp_pth2, act_pth2) )
   END t_dijkstra
 
+--    /(2)--8--(3)--7--(4)\  
+--   4  |       |2 \    |  9
+--  /   |       |   \   |   \
+-- (1)  11   /-(9)   4  14  (5)
+--  \   |   7   |6    \ |   /
+--   8  | /     |      \|  10
+--    \(8)--1--(7)--2--(6)/
+ROUTINE t_MST : BOOLEAN
+  VAR
+    i : INTEGER
+    nde : ARRAY[9] OF t_edge_wt
+    act_pth, exp_pth : ARRAY[9] OF INTEGER
+  BEGIN
+    FOR i=1 TO ARRAY_LEN(nde) DO
+      nde[i] = tstwt__new_node(i)
+    ENDFOR
 
+    tstwt__new(ARRAY_LEN(nde),FALSE)
+    tstwt__addEdge(nde[1], nde[2], 4)
+    tstwt__addEdge(nde[2], nde[3], 8)
+    tstwt__addEdge(nde[3], nde[4], 7)
+    tstwt__addEdge(nde[3], nde[9], 2)
+    tstwt__addEdge(nde[3], nde[6], 4)
+    tstwt__addEdge(nde[4], nde[5], 9)
+    tstwt__addEdge(nde[4], nde[6], 14)
+    tstwt__addEdge(nde[5], nde[6], 10)
+    tstwt__addEdge(nde[6], nde[7], 2)
+    tstwt__addEdge(nde[7], nde[8], 1)
+    tstwt__addEdge(nde[7], nde[9], 6)
+    tstwt__addEdge(nde[8], nde[2], 11)
+    tstwt__addEdge(nde[8], nde[9], 7)
+    tstwt__addEdge(nde[8], nde[1], 8)
+
+    clear_search
+    tstwt__MST(1, search_path)
+
+    FOR i=1 TO ARRAY_LEN(act_pth) DO
+      act_pth[i] = search_path[i].v
+    ENDFOR
+    --expected path
+    exp_pth[1] = 1 ; exp_pth[2] = 2 ; exp_pth[3] = 3 ;
+    exp_pth[4] = 9 ; exp_pth[5] = 7 ; exp_pth[6] = 8 ;
+    exp_pth[7] = 6 ; exp_pth[8] = 5 ; exp_pth[9] = 4 ;
+
+    RETURN(kunit_eq_ari(exp_pth, act_pth))
+
+  END t_MST
 
 BEGIN
-  --total asserts 14
+  --total asserts 15
   kunit_test('create a graph', t_make_graph) --asserts 3
   kunit_test('test DFS', t_dfs) --asserts 4
   kunit_test('test BFS', t_bfs) --asserts 5
   kunit_test('test dijkstra search', t_dijkstra) --asserts 2
+  kunit_test('prims MST', t_MST) --asserts 1
   kunit_done
 
+
   --destruct classes
-  tstgph__destructor
+  --tstgph__destructor
 END test_graph
