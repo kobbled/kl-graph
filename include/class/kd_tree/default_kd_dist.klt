@@ -1,0 +1,110 @@
+
+%define KDTREE_DATA_TYPE t_VECTOR
+%define KDTREE_NODE_NAME v
+%define KDTREE_VALUE_TYPE VECTOR
+%defeval KDTREE_COMPARE_TYPE REAL
+%define KDTREE_MAX_DIST 1.E6
+
+%define DIMENSIONS 2
+
+%mode push
+%mode string QQQ "`" "`" "\\"
+
+%define define_kd_headers(parent) `declare_member(parent,comparator,parent,cmpr)
+ROUTINE comparator(l_val : KDTREE_DATA_TYPE; r_val : KDTREE_DATA_TYPE; axs : INTEGER) : INTEGER FROM parent
+declare_member(parent,user_print,parent,upnt)
+ROUTINE user_print(nde : KDTREE_DATA_TYPE) FROM parent
+declare_member(parent,distance,parent,dist)
+ROUTINE distance(point : KDTREE_DATA_TYPE ; nde : KDTREE_DATA_TYPE) : KDTREE_COMPARE_TYPE FROM parent
+-- check for NN points that could be on the other side of a hyperplane
+-- using a radius equal to the current NN distance. 
+declare_member(parent,inhypersphere,parent,ihyp)
+ROUTINE inhypersphere(dist : KDTREE_COMPARE_TYPE ; point : KDTREE_DATA_TYPE ; &
+                      plane : KDTREE_DATA_TYPE ; axs : INTEGER) : BOOLEAN FROM parent
+`
+
+%define define_kd_members(parent) `declare_member(parent,comparator,parent,cmpr)
+--comparator codes in binary_tree.klt
+ROUTINE comparator(l_val : KDTREE_DATA_TYPE; r_val : KDTREE_DATA_TYPE; axs : INTEGER) : INTEGER
+  VAR
+    r1, r2 : KDTREE_COMPARE_TYPE
+    lconv, rconv : KDTREE_VALUE_TYPE
+  BEGIN
+    lconv = INV((frm)):l_val.KDTREE_NODE_NAME
+    rconv = INV((frm)):r_val.KDTREE_NODE_NAME
+    SELECT axs OF
+      CASE(1):
+        r1 = lconv.x ; r2 = rconv.x ;
+      CASE(2):
+        r1 = lconv.y ; r2 = rconv.y ;
+      CASE(3):
+        r1 = lconv.z ; r2 = rconv.z ;
+      ELSE:
+    ENDSELECT
+    
+    IF r1 > r2 THEN
+      RETURN(GREATER_THAN)
+    ENDIF
+    IF r1 < r2 THEN
+      RETURN(LESS_THAN)
+    ENDIF
+    IF r1 = r2 THEN
+      RETURN(EQUAL_TO)
+    ENDIF
+
+    RETURN(0)
+  END comparator
+declare_member(parent,user_print,parent,upnt)
+ROUTINE user_print(nde : KDTREE_DATA_TYPE)
+  BEGIN
+    WRITE TPDISPLAY(nde.KDTREE_NODE_NAME::5::2)
+  END user_print
+declare_member(parent,distance,parent,dist)
+ROUTINE distance(point : KDTREE_DATA_TYPE ; nde : KDTREE_DATA_TYPE) : KDTREE_COMPARE_TYPE
+  BEGIN
+    RETURN(math__norm(nde.KDTREE_NODE_NAME - point.KDTREE_NODE_NAME))
+  END distance
+declare_member(parent,inhypersphere,parent,ihyp)
+ROUTINE inhypersphere(dist : KDTREE_COMPARE_TYPE ; point : KDTREE_DATA_TYPE ; &
+                      plane : KDTREE_DATA_TYPE ; axs : INTEGER) : BOOLEAN
+  VAR
+    lconv, rconv : KDTREE_VALUE_TYPE
+  BEGIN
+    lconv = INV((frm)):point.KDTREE_NODE_NAME
+    rconv = INV((frm)):plane.KDTREE_NODE_NAME
+    SELECT axs OF
+      CASE(1):
+        -- check overlap on left subtree
+        IF (lconv.x - dist) <= rconv.x THEN
+          RETURN(TRUE)
+        -- check overlap on right subtree
+        ELSE IF (lconv.x + dist) > rconv.x THEN
+          RETURN(TRUE)
+        ENDIF
+        ENDIF
+      CASE(2):
+        -- check overlap on left subtree
+        IF (lconv.y - dist) <= rconv.y THEN
+          RETURN(TRUE)
+        -- check overlap on right subtree
+        ELSE IF (lconv.y + dist) > rconv.y THEN
+          RETURN(TRUE)
+        ENDIF
+        ENDIF
+      CASE(3):
+        -- check overlap on left subtree
+        IF (lconv.z - dist) <= rconv.z THEN
+          RETURN(TRUE)
+        -- check overlap on right subtree
+        ELSE IF (lconv.z + dist) > rconv.z THEN
+          RETURN(TRUE)
+        ENDIF
+        ENDIF
+      ELSE:
+    ENDSELECT
+
+    RETURN(FALSE)
+
+  END inhypersphere
+  `
+%mode pop

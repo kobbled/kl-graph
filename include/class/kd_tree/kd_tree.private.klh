@@ -3,17 +3,21 @@
 
 %include namespace.m
 
+declare_member(class_name,clear_,class_name,clr_)
+ROUTINE clear_ FROM class_name
+declare_member(class_name,clear_data,class_name,clrd)
+ROUTINE clear_data FROM class_name
 declare_member(class_name,reset_generator,class_name,rgen)
 ROUTINE reset_generator FROM class_name
 declare_member(class_name,clear_query,class_name,cqry)
 ROUTINE clear_query FROM class_name
+
 declare_member(class_name,new_node,class_name,nnde)
 ROUTINE new_node(idx : INTEGER) FROM class_name
 declare_member(class_name,bubblesort,class_name,bsrt)
 ROUTINE bubblesort(list : PATH nodedata = KDTREE_DATA_TYPE; low, high : INTEGER; axs : INTEGER) FROM class_name
-declare_member(class_name,insert,class_name,inst)
-ROUTINE insert(data_start, data_end : INTEGER; depth : INTEGER ; &
-               data : PATH nodedata = KDTREE_DATA_TYPE ) : INTEGER FROM class_name
+declare_member(class_name,build_tree,class_name,btre)
+ROUTINE build_tree(data_start, data_end : INTEGER; depth : INTEGER) : INTEGER FROM class_name
 declare_member(class_name,inorder,class_name,iodr)
 ROUTINE inorder(idx : INTEGER) FROM class_name
 declare_member(class_name,preorder,class_name,pedr)
@@ -22,11 +26,10 @@ declare_member(class_name,postorder,class_name,podr)
 ROUTINE postorder(idx : INTEGER) FROM class_name
 declare_member(class_name,minmaxUtil,class_name,mnmu)
 ROUTINE minmaxUtil(root : INTEGER ; depth : INTEGER ; dim : INTEGER ; &
-                   mn_mx : INTEGER ; data : PATH nodedata = KDTREE_DATA_TYPE) : INTEGER FROM class_name
-declare_member(class_name,kNN,class_name,kNN)
-ROUTINE kNN(root : INTEGER ; depth : INTEGER ; point : KDTREE_DATA_TYPE ; &
-            data : PATH nodedata = KDTREE_DATA_TYPE) FROM class_name
-declare_member(class_name,rNN,class_name,rNN)
-ROUTINE rNN(root : INTEGER ; depth : INTEGER ; radius : REAL ; &
-            point : KDTREE_DATA_TYPE ; data : PATH nodedata = KDTREE_DATA_TYPE) FROM class_name
+                   mn_mx : INTEGER) : INTEGER FROM class_name
+declare_member(class_name,kNN,class_name,kNNU)
+ROUTINE kNNUtil(root : INTEGER ; depth : INTEGER ; point : KDTREE_DATA_TYPE) FROM class_name
+declare_member(class_name,rNN,class_name,rNNU)
+ROUTINE rNNUtil(root : INTEGER ; depth : INTEGER ; radius : REAL ; &
+            point : KDTREE_DATA_TYPE) FROM class_name
 %endif --kdtree_private_h

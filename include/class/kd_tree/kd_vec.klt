@@ -16,6 +16,8 @@ declare_member(parent,user_print,parent,upnt)
 ROUTINE user_print(nde : KDTREE_DATA_TYPE) FROM parent
 declare_member(parent,distance,parent,dist)
 ROUTINE distance(point : KDTREE_DATA_TYPE ; nde : KDTREE_DATA_TYPE) : KDTREE_COMPARE_TYPE FROM parent
+-- check for NN points that could be on the other side of a hyperplane
+-- using a radius equal to the current NN distance. 
 declare_member(parent,inhypersphere,parent,ihyp)
 ROUTINE inhypersphere(dist : KDTREE_COMPARE_TYPE ; point : KDTREE_DATA_TYPE ; &
                       plane : KDTREE_DATA_TYPE ; axs : INTEGER) : BOOLEAN FROM parent
@@ -26,14 +28,18 @@ ROUTINE inhypersphere(dist : KDTREE_COMPARE_TYPE ; point : KDTREE_DATA_TYPE ; &
 ROUTINE comparator(l_val : KDTREE_DATA_TYPE; r_val : KDTREE_DATA_TYPE; axs : INTEGER) : INTEGER
   VAR
     r1, r2 : KDTREE_COMPARE_TYPE
+    lconv, rconv : KDTREE_VALUE_TYPE
   BEGIN
+    lconv = INV(frm):l_val.KDTREE_NODE_NAME
+    rconv = INV(frm):r_val.KDTREE_NODE_NAME
+
     SELECT axs OF
       CASE(1):
-        r1 = l_val.KDTREE_NODE_NAME.x ; r2 = r_val.KDTREE_NODE_NAME.x ;
+        r1 = lconv.x ; r2 = rconv.x ;
       CASE(2):
-        r1 = l_val.KDTREE_NODE_NAME.y ; r2 = r_val.KDTREE_NODE_NAME.y ;
+        r1 = lconv.y ; r2 = rconv.y ;
       CASE(3):
-        r1 = l_val.KDTREE_NODE_NAME.z ; r2 = r_val.KDTREE_NODE_NAME.z ;
+        r1 = lconv.z ; r2 = rconv.z ;
       ELSE:
     ENDSELECT
     
@@ -62,32 +68,36 @@ ROUTINE distance(point : KDTREE_DATA_TYPE ; nde : KDTREE_DATA_TYPE) : KDTREE_COM
 declare_member(parent,inhypersphere,parent,ihyp)
 ROUTINE inhypersphere(dist : KDTREE_COMPARE_TYPE ; point : KDTREE_DATA_TYPE ; &
                       plane : KDTREE_DATA_TYPE ; axs : INTEGER) : BOOLEAN
+  VAR
+    lconv, rconv : KDTREE_VALUE_TYPE
   BEGIN
+    lconv = INV(frm):point.KDTREE_NODE_NAME
+    rconv = INV(frm):plane.KDTREE_NODE_NAME
     SELECT axs OF
       CASE(1):
         -- check overlap on left subtree
-        IF (point.KDTREE_NODE_NAME.x - dist) <= plane.KDTREE_NODE_NAME.x THEN
+        IF (lconv.x - dist) <= rconv.x THEN
           RETURN(TRUE)
         -- check overlap on right subtree
-        ELSE IF (point.KDTREE_NODE_NAME.x + dist) > plane.KDTREE_NODE_NAME.x THEN
+        ELSE IF (lconv.x + dist) > rconv.x THEN
           RETURN(TRUE)
         ENDIF
         ENDIF
       CASE(2):
         -- check overlap on left subtree
-        IF (point.KDTREE_NODE_NAME.y - dist) <= plane.KDTREE_NODE_NAME.y THEN
+        IF (lconv.y - dist) <= rconv.y THEN
           RETURN(TRUE)
         -- check overlap on right subtree
-        ELSE IF (point.KDTREE_NODE_NAME.y + dist) > plane.KDTREE_NODE_NAME.y THEN
+        ELSE IF (lconv.y + dist) > rconv.y THEN
           RETURN(TRUE)
         ENDIF
         ENDIF
       CASE(3):
         -- check overlap on left subtree
-        IF (point.KDTREE_NODE_NAME.z - dist) <= plane.KDTREE_NODE_NAME.z THEN
+        IF (lconv.z - dist) <= rconv.z THEN
           RETURN(TRUE)
         -- check overlap on right subtree
-        ELSE IF (point.KDTREE_NODE_NAME.z + dist) > plane.KDTREE_NODE_NAME.z THEN
+        ELSE IF (lconv.z + dist) > rconv.z THEN
           RETURN(TRUE)
         ENDIF
         ENDIF
