@@ -153,6 +153,43 @@ ROUTINE init_tracked
       tracked[i].cost_so_far = GRAPH_MAX_COST
     ENDFOR
   END init_tracked
+
+ROUTINE min_tracked
+  VAR
+    i : INTEGER
+    min_val : GRAPH_EDGE_VTYPE
+    min_idx : INTEGER
+  BEGIN
+    min_val = GRAPH_MAX_COST
+
+    i = 1
+    --first look in adjacency list, and find edge with the
+    --lowest cost.
+    IF (NOT UNINIT(adj_arr[i].GRAPH_NODE_NAME)) THEN
+    REPEAT
+      IF (visited[adj_arr[i].GRAPH_NODE_NAME].v = FALSE) AND &
+         (adj_arr[i].GRAPH_EDGE_NAME < min_val) THEN
+        min_val = adj_arr[i].GRAPH_EDGE_NAME
+        min_idx = adj_arr[i].GRAPH_NODE_NAME
+      ENDIF
+      i = i + 1
+    UNTIL(UNINIT(adj_arr[i].GRAPH_NODE_NAME) OR (i = MAX_NEIGHBORS ) )
+    ENDIF
+
+    --If adjacency list is empty, or all nodes have been visited look in
+    --tracked list an unvisted node with the lost path cost from the start
+    --node
+    IF NOT (min_val < GRAPH_MAX_COST) THEN
+      FOR i=1 TO PATH_LEN(tracked) DO
+        IF (visited[i].v = FALSE) AND (tracked[i].cost_so_far < min_val) THEN
+          min_val = tracked[i].cost_so_far
+          min_idx = i
+        ENDIF
+      ENDFOR
+    ENDIF
+
+    RETURN(min_idx)
+  END min_tracked
 %endif
 
 %ifdef INCLUDE_A_STAR
@@ -265,6 +302,16 @@ ROUTINE list_neighbors
     RETURN(neighbors)
   END list_neighbors
 
+ROUTINE get_adjacencies
+  BEGIN
+    RETURN(this[nde].adj)
+  END get_adjacencies
+
+ROUTINE put_adjacencies
+  BEGIN
+    this[nde].adj = adj
+  END put_adjacencies
+
 ROUTINE DFS
   VAR
     i : INTEGER
@@ -357,6 +404,62 @@ ROUTINE BFS
     UNTIL(PATH_LEN(queue) = 0)
 
   END BFS
+
+%ifdef GRAPH_EDGE_NAME
+--minimum spanning tree uses prims algorithm
+--(ref: https://www.geeksforgeeks.org/prims-minimum-spanning-tree-mst-greedy-algo-5/)
+ROUTINE MST
+  VAR
+    i,j : INTEGER
+    u : INTEGER
+    adj_list : ADJ_ARR_TYPE
+    new_cost : GRAPH_EDGE_VTYPE
+    status : INTEGER
+  BEGIN
+    IF UNINIT(start_node) OR (start_node = 0) THEN start_node = 1 ; ENDIF
+
+    reset_visited
+    --initialize tracking dictionary
+    init_tracked
+
+    --make start_node 0 cost so that it is picked first
+    tracked[start_node].prev_node = 0
+    tracked[start_node].cost_so_far = 0
+    --adj_list is unintialized for first iteration so min_tracked
+    --will be taken from tracked list
+
+    FOR i=1 TO PATH_LEN(this) DO
+      --pick node with the minimum weight in adjacency list.
+      --if no edges, or all adjacencies have been visisted choose
+      --next node with lowest cost so far
+      u = min_tracked(adj_list)
+      --mark as visited
+      visited[u].v = TRUE
+      
+      --add to path list
+      APPEND_NODE(pth, status)
+      pth[PATH_LEN(pth)].v = u
+
+      --update cost so far for all adjacencies
+      adj_list = this[u].adj
+      j = 1
+      REPEAT
+        new_cost = tracked[u].cost_so_far + adj_list[j].GRAPH_EDGE_NAME
+        IF (visited[adj_list[j].GRAPH_NODE_NAME].v = FALSE) AND &
+           (new_cost < tracked[adj_list[j].GRAPH_NODE_NAME].cost_so_far) THEN
+           --update tracked list
+          tracked[adj_list[j].GRAPH_NODE_NAME].prev_node = u
+          tracked[adj_list[j].GRAPH_NODE_NAME].cost_so_far = new_cost
+        ENDIF
+
+        j = j + 1
+        --repeat until adjacency list is null
+      UNTIL(UNINIT(adj_list[j].GRAPH_NODE_NAME) )
+    ENDFOR
+
+    -- return pth
+  END MST
+%endif
 
 %ifdef INCLUDE_A_STAR
 ROUTINE dijkstra_search

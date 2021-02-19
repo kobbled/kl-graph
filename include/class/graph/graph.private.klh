@@ -14,6 +14,8 @@ declare_member(class_name,clear_tracked,class_name,ctrk)
 ROUTINE clear_tracked FROM class_name
 declare_member(class_name,init_tracked,class_name,itrk)
 ROUTINE init_tracked FROM class_name
+declare_member(class_name,min_tracked,class_name,mtrk)
+ROUTINE min_tracked(adj_arr : ADJ_ARR_TYPE) : INTEGER FROM class_name
 %endif
 declare_member(class_name,append_adj,class_name,aadj)
 ROUTINE append_adj(id : INTEGER; data : GRAPH_ADJ_TYPE) FROM class_name
@@ -22,8 +24,6 @@ ROUTINE DFSUtil(nde : INTEGER; grph : PATH pathheader = hdr_graph, nodedata = GR
                    vistd : PATH nodedata = t_BOOL ; &
                    out_pth : PATH nodedata = t_INTEGER) FROM class_name
 %ifdef INCLUDE_A_STAR
-declare_member(class_name,clear_track,class_name,ctrk)
-ROUTINE clear_track FROM class_name
 declare_member(class_name,reconstruct_path,class_name,rpth)
 ROUTINE reconstruct_path(final_node : INTEGER; pth : PATH nodedata = t_INTEGER) FROM class_name
 %endif
