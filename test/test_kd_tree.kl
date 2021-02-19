@@ -2,25 +2,21 @@ PROGRAM test_kd_tree
 %NOLOCKGROUP
 
 %include systemlib.klt
+%include systemvars.klt
 %include binary_tree.c.klt
+%include kd_tree.klt
+define_kd_types(tstkd,REAL)
 
 VAR
   data : PATH nodedata = t_VECTOR
 
 %include kunit.klh
+%from systemlib.klh %import VEC2D
 %from display.klh %import clear, show
 
 --binary tree object
-%class tstkd('kd_tree.klc', 'kd_tree.klh', 'default_kd_vec.klt')
+%class tstkd('kd_tree.klc', 'kd_tree.klh', 'default_kd_dist.klt')
 define_kd_headers(tstkd)
-
-ROUTINE VEC2D(x : REAL; y : REAL) : VECTOR
-  VAR
-    v : VECTOR
-  BEGIN
-    v.x = x; v.y = y; v.z = 0;
-    RETURN(v)
-  END VEC2D
 
 ROUTINE clear_data
   VAR
@@ -53,11 +49,11 @@ ROUTINE t_insert : BOOLEAN
     APPEND_NODE(data, status) ; data[5].v = VEC2D(8,1) ;
     APPEND_NODE(data, status) ; data[6].v = VEC2D(2,3) ;
 
-    tstkd__create(data)
+    tstkd__create(data, (ZEROPOS(1)))
 
     new_generator(PRE_ORDER)
     FOR i=1 TO ARRAY_LEN(act) DO
-      nde = tstkd__next(data)
+      nde = tstkd__next
       act[i] = nde.v
     ENDFOR
 
@@ -95,11 +91,11 @@ ROUTINE t_insert2 : BOOLEAN
     APPEND_NODE(data, status) ; data[8].v = VEC2D(1,10) ;
     APPEND_NODE(data, status) ; data[9].v = VEC2D(50,50) ;
 
-    tstkd__create(data)
+    tstkd__create(data, (ZEROPOS(1)))
 
     new_generator(PRE_ORDER)
     FOR i=1 TO ARRAY_LEN(act) DO
-      nde = tstkd__next(data)
+      nde = tstkd__next
       act[i] = nde.v
     ENDFOR
 
@@ -117,7 +113,7 @@ ROUTINE t_insert2 : BOOLEAN
 -- (1,10)             (55,1) (60,80)
 ROUTINE t_min : BOOLEAN
   VAR
-    mn_x, mn_y : INTEGER
+    mn_x, mn_y : t_VECTOR
     act1, exp1 : VECTOR
     act2, exp2 : VECTOR 
     status : INTEGER
@@ -134,14 +130,14 @@ ROUTINE t_min : BOOLEAN
     APPEND_NODE(data, status) ; data[8].v = VEC2D(1,10) ;
     APPEND_NODE(data, status) ; data[9].v = VEC2D(50,50) ;
 
-    tstkd__create(data)
+    tstkd__create(data, (ZEROPOS(1)))
 
-    mn_x = tstkd__findmin(1, data)
-    act1 = data[mn_x].v
+    mn_x = tstkd__findmin(1)
+    act1 = mn_x.v
     exp1 = VEC2D(1,10)
 
-    mn_y = tstkd__findmin(2, data)
-    act2 = data[mn_y].v
+    mn_y = tstkd__findmin(2)
+    act2 = mn_y.v
     exp2 = VEC2D(55,1)
 
     RETURN(kunit_eq_vec(exp1,act1) AND kunit_eq_vec(exp2,act2) )
@@ -154,7 +150,7 @@ ROUTINE t_min : BOOLEAN
 -- (1,10)             (55,1) (60,80)
 ROUTINE t_max : BOOLEAN
   VAR
-    mx_x, mx_y : INTEGER
+    mx_x, mx_y : t_VECTOR
     act1, exp1 : VECTOR
     act2, exp2 : VECTOR 
     status : INTEGER
@@ -171,14 +167,14 @@ ROUTINE t_max : BOOLEAN
     APPEND_NODE(data, status) ; data[8].v = VEC2D(1,10) ;
     APPEND_NODE(data, status) ; data[9].v = VEC2D(50,50) ;
 
-    tstkd__create(data)
+    tstkd__create(data, (ZEROPOS(1)))
 
-    mx_x = tstkd__findmax(1, data)
-    act1 = data[mx_x].v
+    mx_x = tstkd__findmax(1)
+    act1 = mx_x.v
     exp1 = VEC2D(70,70)
 
-    mx_y = tstkd__findmax(2, data)
-    act2 = data[mx_y].v
+    mx_y = tstkd__findmax(2)
+    act2 = mx_y.v
     exp2 = VEC2D(35,90)
 
     RETURN(kunit_eq_vec(exp1,act1) AND kunit_eq_vec(exp2,act2) )
@@ -204,17 +200,17 @@ ROUTINE t_NN : BOOLEAN
     APPEND_NODE(data, status) ; data[8].v = VEC2D(1,10) ;
     APPEND_NODE(data, status) ; data[9].v = VEC2D(50,50) ;
 
-    tstkd__create(data)
+    tstkd__create(data, (ZEROPOS(1)))
 
     point.v = VEC2D(10,10)
-    tstkd__nearest_neighbors(point, 2, data)
-    tstkd__get_query_arr(data, act1)
+    tstkd__kth_nearest_neighbors(point, 2)
+    tstkd__get_query_arr(act1)
 
     exp1[1] = VEC2D(1,10) ; exp1[2] = VEC2D(10,30)
 
     point.v = VEC2D(80,30)
-    tstkd__nearest_neighbors(point, 3, data)
-    tstkd__get_query_arr(data, act2)
+    tstkd__kth_nearest_neighbors(point, 3)
+    tstkd__get_query_arr(act2)
 
     exp2[1] = VEC2D(50,50) ; exp2[2] = VEC2D(55,1) ;
     exp2[3] = VEC2D(70,70)
@@ -222,6 +218,44 @@ ROUTINE t_NN : BOOLEAN
     RETURN(kunit_eq_arv(exp1, act1, 0.05) AND kunit_eq_arv(exp2, act2, 0.05) )
 
   END t_NN
+
+ROUTINE t_NN_Brute : BOOLEAN
+  VAR
+    point : KDTREE_DATA_TYPE
+    status : INTEGER
+    act1, exp1 : ARRAY[2] OF KDTREE_VALUE_TYPE
+    act2, exp2 : ARRAY[3] OF KDTREE_VALUE_TYPE
+  BEGIN
+    clear_data
+
+    APPEND_NODE(data, status) ; data[1].v = VEC2D(51,75) ;
+    APPEND_NODE(data, status) ; data[2].v = VEC2D(25,40) ;
+    APPEND_NODE(data, status) ; data[3].v = VEC2D(70,70) ;
+    APPEND_NODE(data, status) ; data[4].v = VEC2D(10,30) ;
+    APPEND_NODE(data, status) ; data[5].v = VEC2D(35,90) ;
+    APPEND_NODE(data, status) ; data[6].v = VEC2D(55,1) ;
+    APPEND_NODE(data, status) ; data[7].v = VEC2D(60,80) ;
+    APPEND_NODE(data, status) ; data[8].v = VEC2D(1,10) ;
+    APPEND_NODE(data, status) ; data[9].v = VEC2D(50,50) ;
+
+    tstkd__create(data, (ZEROPOS(1)))
+
+    point.v = VEC2D(10,10)
+    tstkd__kNN_brute_force(point, 2)
+    tstkd__get_query_arr(act1)
+
+    exp1[1] = VEC2D(1,10) ; exp1[2] = VEC2D(10,30)
+
+    point.v = VEC2D(80,30)
+    tstkd__kNN_brute_force(point, 3)
+    tstkd__get_query_arr(act2)
+
+    exp2[1] = VEC2D(50,50) ; exp2[2] = VEC2D(55,1) ;
+    exp2[3] = VEC2D(70,70)
+
+    RETURN(kunit_eq_arv(exp1, act1, 0.05) AND kunit_eq_arv(exp2, act2, 0.05) )
+
+  END t_NN_Brute
 
 ROUTINE t_NNR : BOOLEAN
   VAR
@@ -242,12 +276,12 @@ ROUTINE t_NNR : BOOLEAN
     APPEND_NODE(data, status) ; data[8].v = VEC2D(1,10) ;
     APPEND_NODE(data, status) ; data[9].v = VEC2D(50,50) ;
 
-    tstkd__create(data)
+    tstkd__create(data, (ZEROPOS(1)))
 
     point.v = VEC2D(60,70)
     radius = 20
-    tstkd__nearest_neighbors_radius(point, radius, data)
-    tstkd__get_query_arr(data, act)
+    tstkd__radius_nearest_neighbors(point, radius)
+    tstkd__get_query_arr(act)
 
     exp[1] = VEC2D(70,70) ; exp[2] = VEC2D(60,80) ;
     exp[3] = VEC2D(51,75)
@@ -256,15 +290,136 @@ ROUTINE t_NNR : BOOLEAN
 
   END t_NNR
 
-BEGIN
+ROUTINE t_NNR_brute : BOOLEAN
+  VAR
+    point : KDTREE_DATA_TYPE
+    radius : REAL
+    status : INTEGER
+    act, exp : ARRAY[3] OF KDTREE_VALUE_TYPE
+  BEGIN
+    clear_data
 
-  -- total asserts 9
+    APPEND_NODE(data, status) ; data[1].v = VEC2D(51,75) ;
+    APPEND_NODE(data, status) ; data[2].v = VEC2D(25,40) ;
+    APPEND_NODE(data, status) ; data[3].v = VEC2D(70,70) ;
+    APPEND_NODE(data, status) ; data[4].v = VEC2D(10,30) ;
+    APPEND_NODE(data, status) ; data[5].v = VEC2D(35,90) ;
+    APPEND_NODE(data, status) ; data[6].v = VEC2D(55,1) ;
+    APPEND_NODE(data, status) ; data[7].v = VEC2D(60,80) ;
+    APPEND_NODE(data, status) ; data[8].v = VEC2D(1,10) ;
+    APPEND_NODE(data, status) ; data[9].v = VEC2D(50,50) ;
+
+    tstkd__create(data, (ZEROPOS(1)))
+
+    point.v = VEC2D(60,70)
+    radius = 20
+    tstkd__rNN_brute_force(point, radius)
+    tstkd__get_query_arr(act)
+
+    exp[2] = VEC2D(70,70) ; exp[1] = VEC2D(60,80) ;
+    exp[3] = VEC2D(51,75)
+
+    RETURN(kunit_eq_arv(exp, act, 0.05) )
+
+  END t_NNR_brute
+
+--                  (25,40)
+--        (51,75)             (50,50)
+--    (10,30) (60,80)     (55,1)  (70,70)
+-- (35,90)             (1,10)    
+ROUTINE t_conv : BOOLEAN
+  VAR
+    i, status : INTEGER
+    nde : t_VECTOR
+    exp, act : ARRAY[9] OF VECTOR
+  BEGIN
+    clear_data
+
+    APPEND_NODE(data, status) ; data[1].v = VEC2D(51,75) ;
+    APPEND_NODE(data, status) ; data[2].v = VEC2D(25,40) ;
+    APPEND_NODE(data, status) ; data[3].v = VEC2D(70,70) ;
+    APPEND_NODE(data, status) ; data[4].v = VEC2D(10,30) ;
+    APPEND_NODE(data, status) ; data[5].v = VEC2D(35,90) ;
+    APPEND_NODE(data, status) ; data[6].v = VEC2D(55,1) ;
+    APPEND_NODE(data, status) ; data[7].v = VEC2D(60,80) ;
+    APPEND_NODE(data, status) ; data[8].v = VEC2D(1,10) ;
+    APPEND_NODE(data, status) ; data[9].v = VEC2D(50,50) ;
+
+    tstkd__create(data, POS(0,0,0,0,0,-45,(ZEROPOS(1).Config_data) ))
+
+    new_generator(PRE_ORDER)
+    FOR i=1 TO ARRAY_LEN(act) DO
+      nde = tstkd__next
+      act[i] = nde.v
+    ENDFOR
+
+    exp[1] = VEC2D(25,40) ; exp[2] = VEC2D(51,75) ; exp[3] = VEC2D(10,30) ; 
+    exp[4] = VEC2D(35,90) ; exp[5] = VEC2D(60,80) ; exp[6] = VEC2D(50,50) ; 
+    exp[7] = VEC2D(55,1) ; exp[8] = VEC2D(1,10) ; exp[9] = VEC2D(70,70) ;
+
+    RETURN(kunit_eq_arv(exp, act, 0.05) )
+
+  END t_conv
+
+ROUTINE t_hexagon : BOOLEAN
+  VAR
+    i, status : INTEGER
+    act : ARRAY[4] OF KDTREE_VALUE_TYPE
+  BEGIN
+    clear_data
+    
+    --hexagon raster lines
+    APPEND_NODE(data, status) ; data[1].v = VEC2D(44.721, 122.472) ;
+    APPEND_NODE(data, status) ; data[2].v = VEC2D(44.721, 177.528) ;
+    APPEND_NODE(data, status) ; data[3].v = VEC2D(64.721, 94.945) ;
+    APPEND_NODE(data, status) ; data[4].v = VEC2D(64.721, 205.055) ;
+    APPEND_NODE(data, status) ; data[5].v = VEC2D(84.721, 67.417) ;
+    APPEND_NODE(data, status) ; data[6].v = VEC2D(84.721, 232.583) ;
+    APPEND_NODE(data, status) ; data[7].v = VEC2D(104.721, 39.889) ;
+    APPEND_NODE(data, status) ; data[8].v = VEC2D(104.721, 260.111) ;
+    APPEND_NODE(data, status) ; data[9].v = VEC2D(124.721, 35.218) ;
+    APPEND_NODE(data, status) ; data[10].v = VEC2D(124.721, 264.782) ;
+    APPEND_NODE(data, status) ; data[11].v = VEC2D(144.721, 41.716) ;
+    APPEND_NODE(data, status) ; data[12].v = VEC2D(144.721, 258.284) ;
+    APPEND_NODE(data, status) ; data[13].v = VEC2D(164.721, 48.215) ;
+    APPEND_NODE(data, status) ; data[14].v = VEC2D(164.721, 251.785) ;
+    APPEND_NODE(data, status) ; data[15].v = VEC2D(184.721, 54.713) ;
+    APPEND_NODE(data, status) ; data[16].v = VEC2D(184.721, 245.287) ;
+    APPEND_NODE(data, status) ; data[17].v = VEC2D(204.721, 61.212) ;
+    APPEND_NODE(data, status) ; data[18].v = VEC2D(204.721, 238.788) ;
+    APPEND_NODE(data, status) ; data[19].v = VEC2D(224.721, 67.710) ;
+    APPEND_NODE(data, status) ; data[20].v = VEC2D(224.721, 232.290) ;
+    APPEND_NODE(data, status) ; data[21].v = VEC2D(244.721, 74.208) ;
+    APPEND_NODE(data, status) ; data[22].v = VEC2D(244.721, 225.792) ;
+
+    -- raster direction VEC2D(-1,0)
+    tstkd__create(data, POS(0,0,0,0,0,90,(ZEROPOS(1).Config_data) ))
+
+    tstkd__kth_nearest_neighbors(data[13], 4)
+    tstkd__get_query_arr(act)
+    
+    WRITE TPDISPLAY(CR)
+    FOR i=1 TO 4 DO
+      WRITE TPDISPLAY(CR, act[i]::5::2)
+    ENDFOR
+
+    RETURN(TRUE)
+
+  END t_hexagon
+
+BEGIN
+  -- total asserts 10
   kunit_test('test kd tree', t_insert) --assert 1
   kunit_test('test kd tree 2', t_insert2) --assert 1
   kunit_test('min nodes', t_min) --assert 2
   kunit_test('max nodes', t_max) --assert 2
   kunit_test('kth nearest neighbor', t_NN) --assert 2
+  kunit_test('kth nearest neighbor brute force', t_NN_Brute) --assert 2
   kunit_test('nearest neighbor radius', t_NNR) --assert 1
+  kunit_test('nearest neighbor radius brute force', t_NNR_Brute) --assert 1
+  kunit_test('frame convolution test', t_conv) --asserts 1
+  kunit_test('hexagon nearest neighbors', t_hexagon)
   kunit_done
+
 
 END test_kd_tree
