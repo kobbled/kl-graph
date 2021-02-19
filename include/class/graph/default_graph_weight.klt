@@ -18,6 +18,9 @@
 --SHORT and BYTE types must be passed as INTEGER
 --into routines
 %define GRAPH_EDGE_VTYPE INTEGER
+--max value for edge weight
+%include systemlib.c.klt
+%defeval GRAPH_MAX_COST DEFAULT_SHORT
 
 
 --graph type
@@ -31,17 +34,26 @@
     GRAPH_EDGE_NAME : GRAPH_EDGE_TYPE
   ENDSTRUCTURE
 
+  ADJ_ARR_TYPE FROM parent = ARRAY[MAX_NEIGHBORS] OF GRAPH_ADJ_TYPE
+
   GRAPH_TYPE FROM parent = STRUCTURE
     --edges
-    adj : ARRAY[MAX_NEIGHBORS] OF GRAPH_ADJ_TYPE
+    adj : ADJ_ARR_TYPE
+  ENDSTRUCTURE
+
+  TRACKED_TYPE FROM parent = STRUCTURE
+    prev_node : GRAPH_NODE_TYPE
+    cost_so_far : GRAPH_EDGE_TYPE
   ENDSTRUCTURE
   `
 
 --MUST DEFINE for creating new nodes
-%define define_new_node_hdr(parent) `declare_member(parent,new_node,parent,nnde)
+%define define_graphs_headers(parent) `declare_member(parent,new_node,parent,nnde)
 ROUTINE new_node(id : INTEGER) : GRAPH_ADJ_TYPE FROM parent
+declare_member(parent,addEdge,parent,aedg)
+ROUTINE addEdge(prnt_nde : GRAPH_ADJ_TYPE; child_nde : GRAPH_ADJ_TYPE; wt : GRAPH_EDGE_VTYPE) FROM parent
 `
-%define define_new_node(parent) `declare_member(parent,new_node,parent,nnde)
+%define define_graph_members(parent) `declare_member(parent,new_node,parent,nnde)
 ROUTINE new_node(id : INTEGER) : GRAPH_ADJ_TYPE
   VAR
     nde : GRAPH_ADJ_TYPE
@@ -50,12 +62,7 @@ ROUTINE new_node(id : INTEGER) : GRAPH_ADJ_TYPE
     nde.GRAPH_EDGE_NAME = 0 ;
     RETURN( nde )
   END new_node
-  `
-
-%define define_add_edge_hdr(parent) `declare_member(parent,addEdge,parent,aedg)
-ROUTINE addEdge(prnt_nde : GRAPH_ADJ_TYPE; child_nde : GRAPH_ADJ_TYPE; wt : GRAPH_EDGE_VTYPE) FROM parent
-`
-%define define_add_edge(parent) `declare_member(parent,addEdge,parent,aedg)
+declare_member(parent,addEdge,parent,aedg)
 ROUTINE addEdge(prnt_nde : GRAPH_ADJ_TYPE; child_nde : GRAPH_ADJ_TYPE; wt : GRAPH_EDGE_VTYPE)
   BEGIN
     --add weight
@@ -67,62 +74,7 @@ ROUTINE addEdge(prnt_nde : GRAPH_ADJ_TYPE; child_nde : GRAPH_ADJ_TYPE; wt : GRAP
       prnt_nde.GRAPH_EDGE_NAME = wt
       append_adj((child_nde.GRAPH_NODE_NAME), prnt_nde)
     ENDIF
-
   END addEdge
   `
 
 %mode pop
-
-
-
---objects needed for astar search
--- ******************
-%define INCLUDE_A_STAR
--- (remove 'INCLUDE_A_STAR' if you want to
--- exclude it)
--- -----------------------
---priority queue for frontier
-%define FRONTIER_NAME frntr
---queue definitions
-%include default_priority.klt
-%defeval QUEUE_INDEX_TYPE GRAPH_NODE_VTYPE
-%defeval QUEUE_PRIORITY_TYPE GRAPH_NODE_VTYPE
-
---priority queue
-%mode push
-%mode string QQQ "`" "`" "\\"
-%define queue_type_define(parent) `TYPE
-  QUEUETYPE FROM parent = STRUCTURE
-    QUEUE_INDEX_NAME : GRAPH_NODE_TYPE
-    QUEUE_PRIORITY_NAME : GRAPH_EDGE_TYPE
-  ENDSTRUCTURE
-  `
-
---object for priority queue
-%define define_priority_queue(object_name,cnfg_file) `%class object_name('priority_queue.klc','priority_queue.klh','cnfg_file')`
-
-%mode pop
-
--- -----------------------
-%include hashpath.klt
---linear hash for tracking path
-%define PATH_TRACK_NAME ptrck
-
-%defeval hashname h_trck
-%defeval hval_def t_track
-%defeval hval_type t_track
-
-%mode push
-%mode string QQQ "`" "`" "\\"
-%define hash_type_define(parent) `TYPE
-  hval_type FROM parent = STRUCTURE
-    prev_node : GRAPH_NODE_TYPE
-    cost_so_far : GRAPH_EDGE_TYPE
-  ENDSTRUCTURE`
-
---object for linear hashes
-%define define_tracking_dict(object_name,cnfg_file) `%class object_name('hashpath.klc','hashpath.klh','cnfg_file')`
-
-%mode pop
-
--- ******************

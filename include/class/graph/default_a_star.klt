@@ -1,0 +1,24 @@
+-- -----------------------
+--priority queue for frontier
+%define FRONTIER_NAME frntr
+--queue definitions
+%include default_priority.klt
+%defeval QUEUE_INDEX_TYPE GRAPH_NODE_VTYPE
+%defeval QUEUE_PRIORITY_TYPE GRAPH_NODE_VTYPE
+
+--priority queue
+%mode push
+%mode string QQQ "`" "`" "\\"
+%define queue_type_define(parent) `TYPE
+  QUEUETYPE FROM parent = STRUCTURE
+    QUEUE_INDEX_NAME : GRAPH_NODE_TYPE
+    QUEUE_PRIORITY_NAME : GRAPH_EDGE_TYPE
+  ENDSTRUCTURE
+  `
+
+--object for priority queue
+%define define_priority_queue(object_name,cnfg_file) `%class object_name('priority_queue.klc','priority_queue.klh','cnfg_file')`
+
+%mode pop
+
+-- ******************

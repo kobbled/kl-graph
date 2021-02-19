@@ -1,0 +1,6 @@
+%include default_graph_weight.klt
+%define CONFIG_FILENAME default_graph_wt_astar.klt
+
+--for astar search
+%define INCLUDE_A_STAR
+%include default_a_star.klt
