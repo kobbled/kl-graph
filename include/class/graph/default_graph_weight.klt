@@ -9,6 +9,7 @@
 --into routines
 %define GRAPH_NODE_VTYPE INTEGER
 
+%define GRAPH_ADJ_LIST_NAME t_adj_wt
 %define GRAPH_ADJ_TYPE t_edge_wt
 --optional: exclude if not using edge weights
 --must update adjacency type to exclude
@@ -34,11 +35,11 @@
     GRAPH_EDGE_NAME : GRAPH_EDGE_TYPE
   ENDSTRUCTURE
 
-  ADJ_ARR_TYPE FROM parent = ARRAY[MAX_NEIGHBORS] OF GRAPH_ADJ_TYPE
+  GRAPH_ADJ_LIST_NAME FROM parent = ARRAY[MAX_NEIGHBORS] OF GRAPH_ADJ_TYPE
 
   GRAPH_TYPE FROM parent = STRUCTURE
     --edges
-    adj : ADJ_ARR_TYPE
+    adj : GRAPH_ADJ_LIST_NAME
   ENDSTRUCTURE
 
   TRACKED_TYPE FROM parent = STRUCTURE

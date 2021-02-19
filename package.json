@@ -15,7 +15,9 @@
     "include/class/TSP"
   ],
   "tests" : [
-    "test/test_kd_tree.kl"
+    "test/test_graph.kl",
+    "test/test_kd_tree.kl",
+    "test/test_tsp.kl"
   ],
   "depends" : [
     "errors",

@@ -117,7 +117,7 @@ ROUTINE update_unvisited
 ROUTINE min_tracked
   VAR
     i : INTEGER
-    adj_list : ADJ_ARR_TYPE
+    adj_list : GRAPH_ADJ_LIST_NAME
     min_val : GRAPH_EDGE_VTYPE
     min_idx : INTEGER
   BEGIN

@@ -412,7 +412,7 @@ ROUTINE MST
   VAR
     i,j : INTEGER
     u : INTEGER
-    adj_list : ADJ_ARR_TYPE
+    adj_list : GRAPH_ADJ_LIST_NAME
     new_cost : GRAPH_EDGE_VTYPE
     status : INTEGER
   BEGIN

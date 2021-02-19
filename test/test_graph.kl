@@ -263,7 +263,6 @@ BEGIN
   kunit_test('prims MST', t_MST) --asserts 1
   kunit_done
 
-
   --destruct classes
-  --tstgph__destructor
+  tstgph__destructor
 END test_graph

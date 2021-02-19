@@ -421,5 +421,6 @@ BEGIN
   kunit_test('hexagon nearest neighbors', t_hexagon)
   kunit_done
 
-
+  --destructor
+  tstkd__clear
 END test_kd_tree
