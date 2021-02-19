@@ -11,7 +11,8 @@
     "include",
     "include/class/graph",
     "include/class/binary_tree",
-    "include/class/kd_tree"
+    "include/class/kd_tree",
+    "include/class/TSP"
   ],
   "tests" : [
     "test/test_kd_tree.kl"

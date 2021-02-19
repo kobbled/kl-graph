@@ -1,0 +1,71 @@
+PROGRAM test_tsp
+%NOLOCKGROUP
+
+%include systemlib.klt
+%include systemvars.klt
+
+VAR
+  data : PATH nodedata = t_VECTOR
+  path_plan : PATH nodedata = t_INTEGER
+
+%include kunit.klh
+%from systemlib.klh %import VEC2D
+
+--tsp object
+%class tsttsp('tsp.klc','tsp.klh','default_tsp.klt')
+
+ROUTINE clear_search
+  VAR
+    i : INTEGER
+    status : INTEGER
+  BEGIN
+    i = PATH_LEN(path_plan)
+    WHILE PATH_LEN(path_plan) > 0 DO
+		  DELETE_NODE(path_plan,i,status)
+      i = i - 1
+	  ENDWHILE
+  END clear_search
+
+ROUTINE t_NN : BOOLEAN
+  VAR
+    status : INTEGER
+  BEGIN
+    clear_search
+
+    tsttsp__new(POS(0,0,0,0,0,90,(ZEROPOS(1).Config_data)))
+    
+    --hexagon raster lines
+    tsttsp__append(VEC2D(44.721, 122.472))
+    tsttsp__append(VEC2D(44.721, 177.528))
+    tsttsp__append(VEC2D(64.721, 94.945)) 
+    tsttsp__append(VEC2D(64.721, 205.055))
+    tsttsp__append(VEC2D(84.721, 67.417))
+    tsttsp__append(VEC2D(84.721, 232.583))
+    tsttsp__append(VEC2D(104.721, 39.889))
+    tsttsp__append(VEC2D(104.721, 260.111))
+    tsttsp__append(VEC2D(124.721, 35.218))
+    tsttsp__append(VEC2D(124.721, 264.782))
+    tsttsp__append(VEC2D(144.721, 41.716))
+    tsttsp__append(VEC2D(144.721, 258.284))
+    tsttsp__append(VEC2D(164.721, 48.215))
+    tsttsp__append(VEC2D(164.721, 251.785))
+    tsttsp__append(VEC2D(184.721, 54.713))
+    tsttsp__append(VEC2D(184.721, 245.287))
+    tsttsp__append(VEC2D(204.721, 61.212))
+    tsttsp__append(VEC2D(204.721, 238.788))
+    tsttsp__append(VEC2D(224.721, 67.710))
+    tsttsp__append(VEC2D(224.721, 232.290))
+    tsttsp__append(VEC2D(244.721, 74.208))
+    tsttsp__append(VEC2D(244.721, 225.792))
+
+    tsttsp__NN_graph(2)
+    tsttsp__MST(1, path_plan)
+    tsttsp__get_data(data)
+
+    RETURN(TRUE)
+  END t_NN
+
+BEGIN
+  kunit_test('test nearest neighbors path', t_NN)
+  kunit_done
+END test_tsp
