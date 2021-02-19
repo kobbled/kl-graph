@@ -20,11 +20,6 @@ graph_type_define(class_name)
 %ifdef INCLUDE_A_STAR
 --priority queue types
 queue_type_define(FRONTIER_NAME)
---linear hashes
-hash_header_define(PATH_TRACK_NAME)
-hash_type_define(PATH_TRACK_NAME)
-%include define_type.m
-t_hash(hashname,hval_def,PATH_TRACK_NAME)
 %endif
 
 %defeval class_name BASE_CLASSNAME
@@ -32,8 +27,8 @@ t_hash(hashname,hval_def,PATH_TRACK_NAME)
 VAR
   this : PATH pathheader = hdr_graph, nodedata = GRAPH_TYPE
   visited : PATH nodedata = t_BOOL
-%ifdef INCLUDE_A_STAR
-  track : PATH pathheader = t_linear_hsh, nodedata = hashname
+%ifdef GRAPH_EDGE_NAME
+  tracked : PATH nodedata = TRACKED_TYPE
 %endif
 
 %include errors.klh
@@ -43,14 +38,15 @@ VAR
 %ifdef INCLUDE_A_STAR
 --priority queue
 define_priority_queue(FRONTIER_NAME,CONFIG_FILENAME)
---tracking dict
-define_tracking_dict(PATH_TRACK_NAME,CONFIG_FILENAME)
 %endif
 
 %defeval class_name BASE_CLASSNAME
 -- graph class members
 %include graph.klh
 %include graph.private.klh
+
+-- **** MUST BE DEFINED IN TEMPLATE FILE (.klt)
+define_graph_members(class_name)
 
 --private
 
@@ -134,28 +130,39 @@ ROUTINE DFSUtil
     ENDWHILE
   END DFSUtil
 
-%ifdef INCLUDE_A_STAR
-ROUTINE clear_track
+%ifdef GRAPH_EDGE_NAME
+ROUTINE clear_tracked
   VAR
     i : INTEGER
     status : INTEGER
   BEGIN
-    i = PATH_LEN(track)
-    WHILE PATH_LEN(track) > 0 DO
-		  DELETE_NODE(track,i,status)
+    i = PATH_LEN(tracked)
+    WHILE PATH_LEN(tracked) > 0 DO
+		  DELETE_NODE(tracked,i,status)
       CHK_STAT(status)
       i = i - 1
 	  ENDWHILE
-  END clear_track
+  END clear_tracked
+
+ROUTINE init_tracked
+  VAR
+    i,status : INTEGER
+  BEGIN
+    FOR i=1 TO PATH_LEN(tracked) DO
+      tracked[i].prev_node = 0
+      tracked[i].cost_so_far = GRAPH_MAX_COST
+    ENDFOR
+  END init_tracked
+%endif
+
+%ifdef INCLUDE_A_STAR
 
 ROUTINE reconstruct_path
   VAR
     current : INTEGER
     status : INTEGER
-    nde : hval_type
-    b : BOOLEAN
   BEGIN
-    current = goal
+    current = final_node
     APPEND_NODE(pth, status)
 
     REPEAT
@@ -163,8 +170,7 @@ ROUTINE reconstruct_path
       pth[1].v = current
 
       --get previous node
-      b = `PATH_TRACK_NAME`__get(i_to_s((current)), nde, track)
-      current = nde.prev_node
+      current = tracked[current].prev_node
 
     UNTIL(current = 0)
 
@@ -180,6 +186,9 @@ ROUTINE new
   BEGIN
     clear_graph
     clear_visited
+%ifdef GRAPH_EDGE_NAME
+    clear_tracked
+%endif
 
     FOR i=1 TO no_of_verts DO
       append
@@ -193,14 +202,10 @@ ROUTINE destructor
   BEGIN
     clear_graph
     clear_visited
-%ifdef INCLUDE_A_STAR
-    clear_track
+%ifdef GRAPH_EDGE_NAME
+    clear_tracked
 %endif
   END destructor
-
--- **** MUST BE DEFINED IN TEMPLATE FILE (.klt)
-define_new_node(class_name)
-define_add_edge(class_name)
 
 ROUTINE append
   VAR
@@ -211,6 +216,10 @@ ROUTINE append
     --add visited node
     APPEND_NODE(visited,status)
     visited[PATH_LEN(visited)].v = FALSE
+%ifdef GRAPH_EDGE_NAME
+    --add tracked node
+    APPEND_NODE(tracked,status)
+%endif
     CHK_STAT(status)
   END append
 
@@ -352,7 +361,6 @@ ROUTINE BFS
 %ifdef INCLUDE_A_STAR
 ROUTINE dijkstra_search
   VAR
-    update_track : hval_type
     current : INTEGER
     i : INTEGER
     adj : GRAPH_ADJ_TYPE
@@ -364,12 +372,12 @@ ROUTINE dijkstra_search
     --put start node on frontier
     `FRONTIER_NAME`__push(start_node, 0)
     --initialize tracking dictionary
-    `PATH_TRACK_NAME`__init(track)
+    reset_visited
+    init_tracked
     -- add start node to dict
-    update_track.prev_node = 0
-    update_track.cost_so_far = 0
-    b = `PATH_TRACK_NAME`__put(i_to_s(start_node), update_track, track)
-    IF NOT b THEN karelError(INVALID_INDEX,'error writing to track dict', ER_ABORT) ; ENDIF
+    tracked[start_node].prev_node = 0
+    tracked[start_node].cost_so_far = 0
+    visited[start_node].v = TRUE
 
     REPEAT
       --get next node from priority queue
@@ -377,7 +385,7 @@ ROUTINE dijkstra_search
 
       IF current = goal THEN
         --reconstruct path from tracking list
-        reconstruct_path(start_node, goal, pth)
+        reconstruct_path(goal, pth)
         RETURN
       ENDIF
 
@@ -389,22 +397,25 @@ ROUTINE dijkstra_search
       REPEAT
 
         --calculate cost of path from start_node->current->adj
-        b = `PATH_TRACK_NAME`__get(i_to_s(current), update_track, track)
-        IF NOT b THEN karelError(INVALID_INDEX,'error reading from track dict', ER_ABORT) ; ENDIF
-        new_cost = update_track.cost_so_far + adj.GRAPH_EDGE_NAME
+        new_cost = tracked[current].cost_so_far + adj.GRAPH_EDGE_NAME
 
         --get cost so far of frontier node
-        b = `PATH_TRACK_NAME`__get(i_to_s((adj.GRAPH_NODE_NAME)), update_track, track)
-        IF (NOT b) OR (new_cost < update_track.cost_so_far) THEN
+        b = FALSE
+        IF (visited[adj.GRAPH_NODE_NAME].v = FALSE) THEN 
+          b = TRUE
+        ELSE IF (new_cost < tracked[adj.GRAPH_NODE_NAME].cost_so_far) THEN
+          b = TRUE
+        ENDIF
+        ENDIF
+
+        IF b THEN
           --update cost and previous node in tracking dictionary
-          update_track.prev_node = current
-          update_track.cost_so_far = new_cost
-          b = `PATH_TRACK_NAME`__put(i_to_s((adj.GRAPH_NODE_NAME)), update_track, track)
-          IF NOT b THEN karelError(INVALID_INDEX,'error writing to track dict', ER_ABORT) ; ENDIF
+          tracked[adj.GRAPH_NODE_NAME].prev_node = current
+          tracked[adj.GRAPH_NODE_NAME].cost_so_far = new_cost
+          visited[adj.GRAPH_NODE_NAME].v = TRUE
 
           --put node and cost on frontier
           `FRONTIER_NAME`__push((adj.GRAPH_NODE_NAME), (new_cost))
-
         ENDIF
 
         i = i + 1
@@ -417,7 +428,7 @@ ROUTINE dijkstra_search
 
     UNTIL(`FRONTIER_NAME`__empty)
 
-    reconstruct_path(start_node, current, pth)
+    reconstruct_path(current, pth)
     karelError(INVALID_INDEX,'class_name did not find goal', ER_WARN)
 
   END dijkstra_search
