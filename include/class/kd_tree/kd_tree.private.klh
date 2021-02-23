@@ -6,7 +6,7 @@
 declare_member(class_name,clear_,class_name,clr_)
 ROUTINE clear_ FROM class_name
 declare_member(class_name,clear_data,class_name,clrd)
-ROUTINE clear_data FROM class_name
+ROUTINE clear_data(d : PATH nodedata = KDTREE_DATA_TYPE) FROM class_name
 declare_member(class_name,reset_generator,class_name,rgen)
 ROUTINE reset_generator FROM class_name
 declare_member(class_name,clear_query,class_name,cqry)
@@ -14,6 +14,13 @@ ROUTINE clear_query FROM class_name
 
 declare_member(class_name,new_node,class_name,nnde)
 ROUTINE new_node(idx : INTEGER) FROM class_name
+declare_member(class_name,tree_comparator,class_name,tcmpr)
+ROUTINE tree_comparator(l_val : KDTREE_DATA_TYPE; r_val : KDTREE_DATA_TYPE; axs : INTEGER) : INTEGER FROM class_name
+-- check for NN points that could be on the other side of a hyperplane
+-- using a radius equal to the current NN distance. 
+declare_member(class_name,inhypersphere,class_name,ihyp)
+ROUTINE inhypersphere(dist : KDTREE_COMPARE_TYPE ; point : KDTREE_DATA_TYPE ; &
+                      plane : KDTREE_DATA_TYPE ; axs : INTEGER) : BOOLEAN FROM class_name
 declare_member(class_name,bubblesort,class_name,bsrt)
 ROUTINE bubblesort(list : PATH nodedata = KDTREE_DATA_TYPE; low, high : INTEGER; axs : INTEGER) FROM class_name
 declare_member(class_name,build_tree,class_name,btre)

@@ -1,8 +1,8 @@
 %mode push
 %mode string QQQ "`" "`" "\\"
 
-%define define_kd_types(parent,val_typ) `TYPE
-  T_KTQUEUE FROM parent  = STRUCTURE
+%define define_kd_types(name,parent,val_typ) `TYPE
+  name FROM parent  = STRUCTURE
       idx : INTEGER
       value : val_typ
     ENDSTRUCTURE

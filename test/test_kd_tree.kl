@@ -4,8 +4,9 @@ PROGRAM test_kd_tree
 %include systemlib.klt
 %include systemvars.klt
 %include binary_tree.c.klt
+
 %include kd_tree.klt
-define_kd_types(tstkd,REAL)
+define_kd_types(T_KDQUEUE,tstkd,REAL)
 
 VAR
   data : PATH nodedata = t_VECTOR
@@ -51,7 +52,7 @@ ROUTINE t_insert : BOOLEAN
 
     tstkd__create(data, (ZEROPOS(1)))
 
-    new_generator(PRE_ORDER)
+    tstkd__new_generator(PRE_ORDER)
     FOR i=1 TO ARRAY_LEN(act) DO
       nde = tstkd__next
       act[i] = nde.v
@@ -93,7 +94,7 @@ ROUTINE t_insert2 : BOOLEAN
 
     tstkd__create(data, (ZEROPOS(1)))
 
-    new_generator(PRE_ORDER)
+    tstkd__new_generator(PRE_ORDER)
     FOR i=1 TO ARRAY_LEN(act) DO
       nde = tstkd__next
       act[i] = nde.v
@@ -259,10 +260,10 @@ ROUTINE t_NN_Brute : BOOLEAN
 
 ROUTINE t_NNR : BOOLEAN
   VAR
-    point : KDTREE_DATA_TYPE
+    point : t_VECTOR
     radius : REAL
     status : INTEGER
-    act, exp : ARRAY[3] OF KDTREE_VALUE_TYPE
+    act, exp : ARRAY[3] OF VECTOR
   BEGIN
     clear_data
 
@@ -292,10 +293,10 @@ ROUTINE t_NNR : BOOLEAN
 
 ROUTINE t_NNR_brute : BOOLEAN
   VAR
-    point : KDTREE_DATA_TYPE
+    point : t_VECTOR
     radius : REAL
     status : INTEGER
-    act, exp : ARRAY[3] OF KDTREE_VALUE_TYPE
+    act, exp : ARRAY[3] OF VECTOR
   BEGIN
     clear_data
 
@@ -347,7 +348,7 @@ ROUTINE t_conv : BOOLEAN
 
     tstkd__create(data, POS(0,0,0,0,0,-45,(ZEROPOS(1).Config_data) ))
 
-    new_generator(PRE_ORDER)
+    tstkd__new_generator(PRE_ORDER)
     FOR i=1 TO ARRAY_LEN(act) DO
       nde = tstkd__next
       act[i] = nde.v
@@ -364,7 +365,7 @@ ROUTINE t_conv : BOOLEAN
 ROUTINE t_hexagon : BOOLEAN
   VAR
     i, status : INTEGER
-    act : ARRAY[4] OF KDTREE_VALUE_TYPE
+    act,exp : ARRAY[4] OF VECTOR
   BEGIN
     clear_data
     

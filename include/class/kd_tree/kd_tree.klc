@@ -9,26 +9,26 @@ PROGRAM class_name
 %include errors.klt
 %include systemlib.klt
 %include binary_tree.c.klt
-
 %include binary_tree.klt
 
 %include kd_tree.klt
-define_kd_types(class_name,KDTREE_COMPARE_TYPE)
+define_kd_types(KDTREE_QUERY_TYPE,class_name,KDTREE_COMPARE_TYPE)
+
 
 VAR
   this : PATH pathheader = HDR_BST, nodedata = T_BST
   data : PATH nodedata = KDTREE_DATA_TYPE
   traverse : PATH nodedata = t_INTEGER
   current : INTEGER
-  query : PATH nodedata = T_KTQUEUE
+  query : PATH nodedata = KDTREE_QUERY_TYPE
   frm : XYZWPR
 
 %include errors.klh
 %from math.klh %import ceil, manhattan_dist, norm, norm2
 %include kd_tree.klh
+%include kd_tree.private.klh
 --include user defined members
 define_kd_members(class_name)
-%include kd_tree.private.klh
 
 --private
 
@@ -52,9 +52,9 @@ ROUTINE clear_data
     i : INTEGER
     status : INTEGER
   BEGIN
-    i = PATH_LEN(data)
-    WHILE PATH_LEN(data) > 0 DO
-		  DELETE_NODE(data,i,status)
+    i = PATH_LEN(d)
+    WHILE PATH_LEN(d) > 0 DO
+		  DELETE_NODE(d,i,status)
       CHK_STAT(status)
       i = i - 1
 	  ENDWHILE
@@ -101,6 +101,77 @@ ROUTINE new_node
     ENDIF
   END new_node
 
+ROUTINE tree_comparator
+  VAR
+    r1, r2 : KDTREE_COMPARE_TYPE
+    lconv, rconv : KDTREE_VALUE_TYPE
+  BEGIN
+    lconv = INV((frm)):l_val.KDTREE_NODE_NAME
+    rconv = INV((frm)):r_val.KDTREE_NODE_NAME
+    SELECT axs OF
+      CASE(1):
+        r1 = lconv.x ; r2 = rconv.x ;
+      CASE(2):
+        r1 = lconv.y ; r2 = rconv.y ;
+      CASE(3):
+        r1 = lconv.z ; r2 = rconv.z ;
+      ELSE:
+    ENDSELECT
+    
+    IF r1 > r2 THEN
+      RETURN(GREATER_THAN)
+    ENDIF
+    IF r1 < r2 THEN
+      RETURN(LESS_THAN)
+    ENDIF
+    IF r1 = r2 THEN
+      RETURN(EQUAL_TO)
+    ENDIF
+
+    RETURN(0)
+  END tree_comparator
+
+ROUTINE inhypersphere
+  VAR
+    lconv, rconv : KDTREE_VALUE_TYPE
+  BEGIN
+    lconv = INV((frm)):point.KDTREE_NODE_NAME
+    rconv = INV((frm)):plane.KDTREE_NODE_NAME
+    SELECT axs OF
+      CASE(1):
+        -- check overlap on left subtree
+        IF (lconv.x - dist) <= rconv.x THEN
+          RETURN(TRUE)
+        -- check overlap on right subtree
+        ELSE IF (lconv.x + dist) > rconv.x THEN
+          RETURN(TRUE)
+        ENDIF
+        ENDIF
+      CASE(2):
+        -- check overlap on left subtree
+        IF (lconv.y - dist) <= rconv.y THEN
+          RETURN(TRUE)
+        -- check overlap on right subtree
+        ELSE IF (lconv.y + dist) > rconv.y THEN
+          RETURN(TRUE)
+        ENDIF
+        ENDIF
+      CASE(3):
+        -- check overlap on left subtree
+        IF (lconv.z - dist) <= rconv.z THEN
+          RETURN(TRUE)
+        -- check overlap on right subtree
+        ELSE IF (lconv.z + dist) > rconv.z THEN
+          RETURN(TRUE)
+        ENDIF
+        ENDIF
+      ELSE:
+    ENDSELECT
+
+    RETURN(FALSE)
+
+  END inhypersphere
+
 ROUTINE bubblesort
   VAR
     i,j : INTEGER
@@ -110,7 +181,7 @@ ROUTINE bubblesort
     n = high
     FOR i=low TO high DO
       FOR j=low TO n-1 DO
-        IF comparator(list[j], list[j+1], axs) = LESS_THAN THEN
+        IF tree_comparator(list[j], list[j+1], axs) = LESS_THAN THEN
           swap = (list[j+1])
           list[j+1] = (list[j])
           list[j] = swap
@@ -196,7 +267,7 @@ ROUTINE minmaxUtil
           n1 = minmaxUtil((this[root].right), depth+1, dim, mn_mx)
       ENDSELECT
       
-      IF comparator(data[n1], data[root], dim) = mn_mx THEN
+      IF tree_comparator(data[n1], data[root], dim) = mn_mx THEN
         RETURN(n1)
       ENDIF
     ENDIF
@@ -214,14 +285,14 @@ ROUTINE minmaxUtil
       n2 = minmaxUtil((this[root].right), depth+1, dim, mn_mx)
     ENDIF
 
-    IF comparator(data[n1], data[n2], dim) = mn_mx THEN
-      IF comparator(data[n1], data[root], dim) = mn_mx THEN
+    IF tree_comparator(data[n1], data[n2], dim) = mn_mx THEN
+      IF tree_comparator(data[n1], data[root], dim) = mn_mx THEN
         RETURN(n1)
       ELSE
         RETURN(root)
       ENDIF
     ELSE
-      IF comparator(data[n2], data[root], dim) = mn_mx THEN
+      IF tree_comparator(data[n2], data[root], dim) = mn_mx THEN
         RETURN(n2)
       ELSE
         RETURN(root)
@@ -260,7 +331,7 @@ ROUTINE kNNUtil
     ENDIF
 
     -- visit subtrees is most promising order:
-    IF comparator(point, data[root], (depth MOD DIMENSIONS)+1) = LESS_THAN THEN
+    IF tree_comparator(point, data[root], (depth MOD DIMENSIONS)+1) = LESS_THAN THEN
       kNNUtil((this[root].left), depth+1, point)
       kNNUtil((this[root].right), depth+1, point)
     ELSE
@@ -302,7 +373,7 @@ ROUTINE rNNUtil
     ENDIF
 
     -- visit subtrees is most promising order:
-    IF comparator(point, data[root], (depth MOD DIMENSIONS)+1) = LESS_THAN THEN
+    IF tree_comparator(point, data[root], (depth MOD DIMENSIONS)+1) = LESS_THAN THEN
       rNNUtil((this[root].left), depth+1, (radius), point)
       rNNUtil((this[root].right), depth+1, (radius), point)
     ELSE
@@ -322,7 +393,7 @@ ROUTINE clear
     status : INTEGER
   BEGIN
     clear_
-    clear_data
+    clear_data(data)
     reset_generator
     clear_query
 
