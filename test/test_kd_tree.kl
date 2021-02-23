@@ -8,16 +8,24 @@ PROGRAM test_kd_tree
 %include kd_tree.klt
 define_kd_types(T_KDQUEUE,tstkd,REAL)
 
+%include paths.klt
+define_kd_types(T_QUEUE_PTH,tkdph,REAL)
+
 VAR
   data : PATH nodedata = t_VECTOR
+  pth : PATH nodedata = t_VEC_PATH
 
 %include kunit.klh
 %from systemlib.klh %import VEC2D
 %from display.klh %import clear, show
 
---binary tree object
+--vector data kdtree
 %class tstkd('kd_tree.klc', 'kd_tree.klh', 'default_kd_dist.klt')
 define_kd_headers(tstkd)
+
+--vector path data kd tree
+%class tkdph('kd_tree.klc', 'kd_tree.klh', 'kd_vec_path.klt')
+define_kd_headers(tkdph)
 
 ROUTINE clear_data
   VAR
@@ -30,6 +38,18 @@ ROUTINE clear_data
       i = i - 1
 	  ENDWHILE
   END clear_data
+
+ROUTINE clear_path
+  VAR
+    i : INTEGER
+    status : INTEGER
+  BEGIN
+    i = PATH_LEN(pth)
+    WHILE PATH_LEN(pth) > 0 DO
+		  DELETE_NODE(pth,i,status)
+      i = i - 1
+	  ENDWHILE
+  END clear_path
 
 
 --          (7,2)
@@ -395,17 +415,85 @@ ROUTINE t_hexagon : BOOLEAN
     tstkd__kth_nearest_neighbors(data[13], 4)
     tstkd__get_query_arr(act)
     
-    WRITE TPDISPLAY(CR)
-    FOR i=1 TO 4 DO
-      WRITE TPDISPLAY(CR, act[i]::5::2)
-    ENDFOR
+    exp[1] = VEC2D(184.72,54.71) ; exp[2] = VEC2D(144.72,41.72) ; exp[3] = VEC2D(124.72,35.22) ; 
+    exp[4] = VEC2D(204.72,61.21) ;
 
-    RETURN(TRUE)
+    RETURN(kunit_eq_arv(exp, act, 0.05) )
 
   END t_hexagon
 
+
+ROUTINE t_path : BOOLEAN
+  VAR
+    i, status : INTEGER
+    nde : t_VEC_PATH
+    act, exp : ARRAY[5] OF VECTOR
+  BEGIN
+    clear_path
+    -- L
+    APPEND_NODE(pth, status) ; pth[1].v = VEC2D(-4,4) ;       pth[1].code = PTH_MOVETO ;  pth[1].polygon = 1
+    APPEND_NODE(pth, status) ; pth[2].v = VEC2D(-4,0) ;       pth[2].code = PTH_LINETO ;  pth[2].polygon = 1
+    APPEND_NODE(pth, status) ; pth[3].v = VEC2D(-0.5,0) ;     pth[3].code = PTH_LINETO ;  pth[3].polygon = 1
+    APPEND_NODE(pth, status) ; pth[4].v = VEC2D(-0.5,1) ;     pth[4].code = PTH_LINETO ;  pth[4].polygon = 1
+    APPEND_NODE(pth, status) ; pth[5].v = VEC2D(-2.5,1) ;     pth[5].code = PTH_LINETO ;  pth[5].polygon = 1
+    APPEND_NODE(pth, status) ; pth[6].v = VEC2D(-2.5,4) ;     pth[6].code = PTH_LINETO ;  pth[6].polygon = 1
+    APPEND_NODE(pth, status) ; pth[7].v = VEC2D(-4,4) ;       pth[7].code = PTH_CLOSE ;   pth[7].polygon = 1 
+    -- O
+    APPEND_NODE(pth, status) ; pth[8].v = VEC2D(2,4) ;        pth[8].code = PTH_MOVETO ;  pth[8].polygon = 2
+    APPEND_NODE(pth, status) ; pth[9].v = VEC2D(0,2) ;        pth[9].code = PTH_CURVE4 ;  pth[9].polygon = 2
+    APPEND_NODE(pth, status) ; pth[10].v = VEC2D(2,0) ;       pth[10].code = PTH_CURVE4 ; pth[10].polygon = 2
+    APPEND_NODE(pth, status) ; pth[11].v = VEC2D(4,2) ;       pth[11].code = PTH_CURVE4 ; pth[11].polygon = 2
+    APPEND_NODE(pth, status) ; pth[12].v = VEC2D(2,4) ;       pth[12].code = PTH_CLOSE ;  pth[12].polygon = 2
+    APPEND_NODE(pth, status) ; pth[13].v = VEC2D(1,2) ;       pth[13].code = PTH_MOVETO ; pth[13].polygon = 2
+    APPEND_NODE(pth, status) ; pth[14].v = VEC2D(2,1) ;       pth[14].code = PTH_CURVE4 ; pth[14].polygon = 2
+    APPEND_NODE(pth, status) ; pth[15].v = VEC2D(3,2) ;       pth[15].code = PTH_CURVE4 ; pth[15].polygon = 2
+    APPEND_NODE(pth, status) ; pth[16].v = VEC2D(2,3) ;       pth[16].code = PTH_CURVE4 ; pth[16].polygon = 2
+    APPEND_NODE(pth, status) ; pth[17].v = VEC2D(1,2) ;       pth[17].code = PTH_CLOSE ;  pth[17].polygon = 2 
+    -- G
+    APPEND_NODE(pth, status) ; pth[18].v = VEC2D(-2,-1.5) ;   pth[18].code = PTH_MOVETO ; pth[18].polygon = 3
+    APPEND_NODE(pth, status) ; pth[19].v = VEC2D(-2,-2.4) ;   pth[19].code = PTH_LINETO ; pth[19].polygon = 3
+    APPEND_NODE(pth, status) ; pth[20].v = VEC2D(-1,-2.4) ;   pth[20].code = PTH_LINETO ; pth[20].polygon = 3
+    APPEND_NODE(pth, status) ; pth[21].v = VEC2D(-2,-3) ;     pth[21].code = PTH_CURVE4 ; pth[21].polygon = 3
+    APPEND_NODE(pth, status) ; pth[22].v = VEC2D(-3,-2) ;     pth[22].code = PTH_CURVE4 ; pth[22].polygon = 3
+    APPEND_NODE(pth, status) ; pth[23].v = VEC2D(-2,-1) ;     pth[23].code = PTH_CURVE4 ; pth[23].polygon = 3
+    APPEND_NODE(pth, status) ; pth[24].v = VEC2D(-1.4,-1.2) ; pth[24].code = PTH_CURVE4 ; pth[24].polygon = 3
+    APPEND_NODE(pth, status) ; pth[25].v = VEC2D(-0.6,-0.6) ; pth[25].code = PTH_LINETO ; pth[25].polygon = 3
+    APPEND_NODE(pth, status) ; pth[26].v = VEC2D(-2,0) ;      pth[26].code = PTH_CURVE4 ; pth[26].polygon = 3
+    APPEND_NODE(pth, status) ; pth[27].v = VEC2D(-4,-2) ;     pth[27].code = PTH_CURVE4 ; pth[27].polygon = 3
+    APPEND_NODE(pth, status) ; pth[28].v = VEC2D(-2,-4) ;     pth[28].code = PTH_CURVE4 ; pth[28].polygon = 3
+    APPEND_NODE(pth, status) ; pth[29].v = VEC2D(0,-1.5) ;    pth[29].code = PTH_CURVE4 ; pth[29].polygon = 3
+    APPEND_NODE(pth, status) ; pth[30].v = VEC2D(-2,-1.5) ;   pth[30].code = PTH_CLOSE ;  pth[30].polygon = 3 
+    -- O
+    APPEND_NODE(pth, status) ; pth[31].v = VEC2D(0,-2) ;      pth[31].code = PTH_MOVETO ; pth[31].polygon = 4
+    APPEND_NODE(pth, status) ; pth[32].v = VEC2D(2,-4) ;      pth[32].code = PTH_CURVE4 ; pth[32].polygon = 4
+    APPEND_NODE(pth, status) ; pth[33].v = VEC2D(4,-2) ;      pth[33].code = PTH_CURVE4 ; pth[33].polygon = 4
+    APPEND_NODE(pth, status) ; pth[34].v = VEC2D(2,0) ;       pth[34].code = PTH_CURVE4 ; pth[34].polygon = 4
+    APPEND_NODE(pth, status) ; pth[35].v = VEC2D(0,-2) ;      pth[35].code = PTH_CLOSE ;  pth[35].polygon = 4
+    APPEND_NODE(pth, status) ; pth[36].v = VEC2D(2,-1) ;      pth[36].code = PTH_MOVETO ; pth[36].polygon = 4
+    APPEND_NODE(pth, status) ; pth[37].v = VEC2D(1,-2) ;      pth[37].code = PTH_CURVE4 ; pth[37].polygon = 4
+    APPEND_NODE(pth, status) ; pth[38].v = VEC2D(2,-3) ;      pth[38].code = PTH_CURVE4 ; pth[38].polygon = 4
+    APPEND_NODE(pth, status) ; pth[39].v = VEC2D(3,-2) ;      pth[39].code = PTH_CURVE4 ; pth[39].polygon = 4
+    APPEND_NODE(pth, status) ; pth[40].v = VEC2D(2,-1) ;      pth[40].code = PTH_CLOSE ;  pth[40].polygon = 4 
+    -- circle
+    APPEND_NODE(pth, status) ; pth[41].v = VEC2D(0,6) ;       pth[41].code = PTH_MOVETO ; pth[41].polygon = 5
+    APPEND_NODE(pth, status) ; pth[42].v = VEC2D(-6,0) ;      pth[42].code = PTH_CURVE4 ; pth[42].polygon = 5
+    APPEND_NODE(pth, status) ; pth[43].v = VEC2D(0,-6) ;      pth[43].code = PTH_CURVE4 ; pth[43].polygon = 5
+    APPEND_NODE(pth, status) ; pth[44].v = VEC2D(6,0) ;       pth[44].code = PTH_CURVE4 ; pth[44].polygon = 5
+    APPEND_NODE(pth, status) ; pth[45].v = VEC2D(0,6) ;       pth[45].code = PTH_CLOSE ;  pth[45].polygon = 5
+    
+    tkdph__create_filtered(pth, (ZEROPOS(1)))
+
+    tkdph__kth_nearest_neighbors(pth[35], 5)
+    tkdph__get_query_arr(act)
+
+    exp[1] = VEC2D(-2,-1.5) ; exp[2] = VEC2D(2,-1) ; exp[3] = VEC2D(1,2) ; 
+    exp[4] = VEC2D(2,4) ; exp[5] = VEC2D(-4,4) ;
+
+    RETURN(kunit_eq_arv(exp, act, 0.05) )
+  END t_path
+
 BEGIN
-  -- total asserts 10
+  -- total asserts 15
   kunit_test('test kd tree', t_insert) --assert 1
   kunit_test('test kd tree 2', t_insert2) --assert 1
   kunit_test('min nodes', t_min) --assert 2
@@ -415,8 +503,10 @@ BEGIN
   kunit_test('nearest neighbor radius', t_NNR) --assert 1
   kunit_test('nearest neighbor radius brute force', t_NNR_Brute) --assert 1
   kunit_test('frame convolution test', t_conv) --asserts 1
-  kunit_test('hexagon nearest neighbors', t_hexagon)
+  kunit_test('hexagon nearest neighbors', t_hexagon) --asserts 1
+  kunit_test('vector path kd tree', t_path) --asserts 1
   kunit_done
+
 
   --destructor
   tstkd__clear
