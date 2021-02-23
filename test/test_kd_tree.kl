@@ -184,10 +184,10 @@ ROUTINE t_max : BOOLEAN
 
 ROUTINE t_NN : BOOLEAN
   VAR
-    point : KDTREE_DATA_TYPE
+    point : t_VECTOR
     status : INTEGER
-    act1, exp1 : ARRAY[2] OF KDTREE_VALUE_TYPE
-    act2, exp2 : ARRAY[3] OF KDTREE_VALUE_TYPE
+    act1, exp1 : ARRAY[2] OF VECTOR
+    act2, exp2 : ARRAY[3] OF VECTOR
   BEGIN
     clear_data
 
@@ -222,10 +222,10 @@ ROUTINE t_NN : BOOLEAN
 
 ROUTINE t_NN_Brute : BOOLEAN
   VAR
-    point : KDTREE_DATA_TYPE
+    point : t_VECTOR
     status : INTEGER
-    act1, exp1 : ARRAY[2] OF KDTREE_VALUE_TYPE
-    act2, exp2 : ARRAY[3] OF KDTREE_VALUE_TYPE
+    act1, exp1 : ARRAY[2] OF VECTOR
+    act2, exp2 : ARRAY[3] OF VECTOR
   BEGIN
     clear_data
 
@@ -239,16 +239,14 @@ ROUTINE t_NN_Brute : BOOLEAN
     APPEND_NODE(data, status) ; data[8].v = VEC2D(1,10) ;
     APPEND_NODE(data, status) ; data[9].v = VEC2D(50,50) ;
 
-    tstkd__create(data, (ZEROPOS(1)))
-
     point.v = VEC2D(10,10)
-    tstkd__kNN_brute_force(point, 2)
+    tstkd__kNN_brute_force(point, 2, data)
     tstkd__get_query_arr(act1)
 
     exp1[1] = VEC2D(1,10) ; exp1[2] = VEC2D(10,30)
 
     point.v = VEC2D(80,30)
-    tstkd__kNN_brute_force(point, 3)
+    tstkd__kNN_brute_force(point, 3, data)
     tstkd__get_query_arr(act2)
 
     exp2[1] = VEC2D(50,50) ; exp2[2] = VEC2D(55,1) ;
@@ -310,14 +308,12 @@ ROUTINE t_NNR_brute : BOOLEAN
     APPEND_NODE(data, status) ; data[8].v = VEC2D(1,10) ;
     APPEND_NODE(data, status) ; data[9].v = VEC2D(50,50) ;
 
-    tstkd__create(data, (ZEROPOS(1)))
-
     point.v = VEC2D(60,70)
     radius = 20
-    tstkd__rNN_brute_force(point, radius)
+    tstkd__rNN_brute_force(point, radius, data)
     tstkd__get_query_arr(act)
 
-    exp[2] = VEC2D(70,70) ; exp[1] = VEC2D(60,80) ;
+    exp[1] = VEC2D(70,70) ; exp[2] = VEC2D(60,80) ;
     exp[3] = VEC2D(51,75)
 
     RETURN(kunit_eq_arv(exp, act, 0.05) )

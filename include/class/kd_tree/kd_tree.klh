@@ -34,9 +34,10 @@ ROUTINE findmax(dimension : INTEGER) : KDTREE_DATA_TYPE FROM class_name
 declare_member(class_name,kth_nearest_neighbors,class_name,kNN)
 ROUTINE kth_nearest_neighbors(point : KDTREE_DATA_TYPE ; k : INTEGER) FROM class_name
 declare_member(class_name,kNN_brute_force,class_name,kNNb)
-ROUTINE kNN_brute_force(point : KDTREE_DATA_TYPE ; k : INTEGER) FROM class_name
+ROUTINE kNN_brute_force(point : KDTREE_DATA_TYPE ; k : INTEGER ; list : PATH nodedata = KDTREE_DATA_TYPE) FROM class_name
 declare_member(class_name,radius_nearest_neighbors,class_name,rNN)
 ROUTINE radius_nearest_neighbors(point : KDTREE_DATA_TYPE ; radius : KDTREE_COMPARE_TYPE) FROM class_name
 declare_member(class_name,rNN_brute_force,class_name,rNNb)
-ROUTINE rNN_brute_force(point : KDTREE_DATA_TYPE ; radius : KDTREE_COMPARE_TYPE) FROM class_name
+ROUTINE rNN_brute_force(point : KDTREE_DATA_TYPE ; radius : KDTREE_COMPARE_TYPE ; &
+                        list : PATH nodedata = KDTREE_DATA_TYPE) FROM class_name
 %endif --end header

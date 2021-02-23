@@ -541,6 +541,8 @@ ROUTINE kNN_brute_force
     dist : KDTREE_COMPARE_TYPE
     inserted : BOOLEAN
   BEGIN
+    --copy data into object
+    COPY_PATH(list, 0, 0, data, status)
     clear_query
     --fill query with kth nodes. Set 1st index for insert
     FOR i=1 TO k DO
@@ -595,6 +597,8 @@ ROUTINE rNN_brute_force
     dist : KDTREE_COMPARE_TYPE
     inserted : BOOLEAN
   BEGIN
+    --copy data into object
+    COPY_PATH(list, 0, 0, data, status)
     clear_query
     
     --dummy placement node
