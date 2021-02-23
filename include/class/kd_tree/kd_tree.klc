@@ -349,11 +349,11 @@ ROUTINE kNNUtil
       RETURN
     ENDIF
 
-    dist = distance(point, data[root])
     -- append node to query list
-    IF dist > 0 THEN
+    IF query_filter(point, data[root]) THEN
       i = 1
       inserted = FALSE
+      dist = distance(point, data[root])
       WHILE((i<=PATH_LEN(query)) AND (NOT inserted)) DO
         IF dist < query[i].value THEN
           INSERT_NODE(query, i, status)
@@ -394,7 +394,7 @@ ROUTINE rNNUtil
 
     dist = distance(point, data[root])
     -- append node to query list
-    IF (dist < radius) AND (dist > 0) THEN
+    IF (dist < radius) AND query_filter(point, data[root]) THEN
       i = 1
       inserted = FALSE
       WHILE((i<=PATH_LEN(query)) AND (NOT inserted)) DO
@@ -609,11 +609,11 @@ ROUTINE kNN_brute_force
     query[1].value = KDTREE_MAX_DIST
 
     FOR i=1 TO PATH_LEN(data) DO
-      dist = distance(point, data[i])
       -- append node to query list
-      IF dist > 0 THEN
+      IF query_filter(point, data[i]) THEN
         j = 1
         inserted = FALSE
+        dist = distance(point, data[i])
         WHILE((j<=PATH_LEN(query)) AND (NOT inserted)) DO
           IF dist < query[j].value THEN
             INSERT_NODE(query, j, status)
@@ -665,7 +665,7 @@ ROUTINE rNN_brute_force
     FOR i=1 TO PATH_LEN(data) DO
       dist = distance(point, data[i])
       -- append node to query list
-      IF (dist < radius) AND (dist > 0) THEN
+      IF (dist < radius) AND query_filter(point, data[i]) THEN
         j = 1
         inserted = FALSE
         WHILE((j<=PATH_LEN(query)) AND (NOT inserted)) DO

@@ -27,8 +27,12 @@
 
 %define define_kd_headers(parent) `declare_member(parent,user_print,parent,upnt)
 ROUTINE user_print(nde : KDTREE_DATA_TYPE) FROM parent
+declare_member(parent,user_string,parent,ustr)
+ROUTINE user_string(nde : KDTREE_DATA_TYPE) : STRING FROM parent
 declare_member(parent,distance,parent,dist)
 ROUTINE distance(point : KDTREE_DATA_TYPE ; nde : KDTREE_DATA_TYPE) : KDTREE_COMPARE_TYPE FROM parent
+declare_member(parent,query_filter,parent,qftr)
+ROUTINE query_filter(l_val : KDTREE_DATA_TYPE; r_val : KDTREE_DATA_TYPE) : BOOLEAN FROM parent
 `
 
 %define define_kd_members(parent) `declare_member(parent,user_print,parent,upnt)
@@ -36,11 +40,20 @@ ROUTINE user_print(nde : KDTREE_DATA_TYPE)
   BEGIN
     WRITE TPDISPLAY(nde.KDTREE_NODE_NAME::5::2)
   END user_print
+declare_member(parent,user_string,parent,ustr)
+ROUTINE user_string(nde : KDTREE_DATA_TYPE) : STRING
+  BEGIN
+    RETURN(vec_to_s(nde.KDTREE_NODE_NAME,','))
+  END user_string
 declare_member(parent,distance,parent,dist)
 ROUTINE distance(point : KDTREE_DATA_TYPE ; nde : KDTREE_DATA_TYPE) : KDTREE_COMPARE_TYPE
   BEGIN
     RETURN(math__norm(nde.KDTREE_NODE_NAME - point.KDTREE_NODE_NAME))
   END distance
+declare_member(parent,query_filter,parent,qftr)
+ROUTINE query_filter(l_val : KDTREE_DATA_TYPE; r_val : KDTREE_DATA_TYPE) : BOOLEAN
   BEGIN
+    RETURN(distance(l_val, r_val) > 0)
+  END query_filter
   `
 %mode pop
