@@ -26,6 +26,7 @@
     "math",
     "Hash",
     "display",
+    "paths",
     "ktransw-macros",
     "systemlib"
   ]

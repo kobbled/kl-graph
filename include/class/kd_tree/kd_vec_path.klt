@@ -1,0 +1,83 @@
+
+%define KD_CONFIG_FILE kd_vec_path.klt
+
+%define USER_DEFINED_TYPES paths.klt
+
+%define KDTREE_DATA_TYPE t_VEC_PATH
+%define KDTREE_NODE_NAME v
+%define KDTREE_VALUE_TYPE VECTOR
+%defeval KDTREE_COMPARE_TYPE REAL
+%define KDTREE_MAX_DIST 1.E6
+
+%define KDTREE_QUERY_TYPE T_QUEUE_PTH
+
+%define DIMENSIONS 2
+
+--flag for filter
+%define INCLUDE_FILTER
+
+--hash table
+------------------
+%defeval HASH_CLASS_NAME hshint
+%include hashint.klt
+
+%mode push
+%mode string QQQ "`" "`" "\\"
+%define define_hash(object_name,cnfg_file) `%class object_name('hashpath.klc','hashpath.klh','cnfg_file')`
+%mode pop
+------------------
+
+%mode push
+%mode string QQQ "`" "`" "\\"
+
+%define define_kd_headers(parent) `declare_member(parent,user_print,parent,upnt)
+ROUTINE user_print(nde : KDTREE_DATA_TYPE) FROM parent
+declare_member(parent,user_string,parent,ustr)
+ROUTINE user_string(nde : KDTREE_DATA_TYPE) : STRING FROM parent
+declare_member(parent,distance,parent,dist)
+ROUTINE distance(point : KDTREE_DATA_TYPE ; nde : KDTREE_DATA_TYPE) : KDTREE_COMPARE_TYPE FROM parent
+declare_member(parent,filter,parent,ftlr)
+ROUTINE filter(in_data : PATH nodedata = KDTREE_DATA_TYPE ; out_data : PATH nodedata = KDTREE_DATA_TYPE) FROM parent
+declare_member(parent,query_filter,parent,qftr)
+ROUTINE query_filter(l_val : KDTREE_DATA_TYPE; r_val : KDTREE_DATA_TYPE) : BOOLEAN FROM parent
+`
+
+%define define_kd_members(parent) `declare_member(parent,user_print,parent,upnt)
+ROUTINE user_print(nde : KDTREE_DATA_TYPE)
+  BEGIN
+    WRITE TPDISPLAY(nde.KDTREE_NODE_NAME::5::2)
+  END user_print
+declare_member(parent,user_string,parent,ustr)
+ROUTINE user_string(nde : KDTREE_DATA_TYPE) : STRING
+  BEGIN
+    --must provide a unqiue hash for duplicate points
+    RETURN(i_to_s((nde.code)) + vec_to_s(nde.KDTREE_NODE_NAME,','))
+  END user_string
+declare_member(parent,distance,parent,dist)
+ROUTINE distance(point : KDTREE_DATA_TYPE ; nde : KDTREE_DATA_TYPE) : KDTREE_COMPARE_TYPE
+  BEGIN
+    RETURN(math__norm(nde.KDTREE_NODE_NAME - point.KDTREE_NODE_NAME))
+  END distance
+declare_member(parent,filter,parent,ftlr)
+ROUTINE filter(in_data : PATH nodedata = KDTREE_DATA_TYPE ; out_data : PATH nodedata = KDTREE_DATA_TYPE)
+  VAR
+    i : INTEGER
+    status : INTEGER
+  BEGIN
+    clear_data(out_data)
+    FOR i=1 TO PATH_LEN(in_data) DO
+      SELECT in_data[i].code OF
+        CASE(PTH_CLOSE,PTH_MOVETO):
+          APPEND_NODE(out_data, status)
+          out_data[PATH_LEN(out_data)] = in_data[i]
+        ELSE:
+      ENDSELECT
+    ENDFOR
+  END filter
+declare_member(parent,query_filter,parent,qftr)
+ROUTINE query_filter(l_val : KDTREE_DATA_TYPE; r_val : KDTREE_DATA_TYPE) : BOOLEAN
+  BEGIN
+    RETURN((distance(l_val, r_val) > 0) AND (l_val.code <> r_val.code))
+  END query_filter
+  `
+%mode pop

@@ -11,6 +11,10 @@ declare_member(class_name,clear,class_name,clr)
 ROUTINE clear FROM class_name
 declare_member(class_name,create,class_name,crat)
 ROUTINE create(kd_data : PATH nodedata = KDTREE_DATA_TYPE; coord_frame : XYZWPR) FROM class_name
+%ifdef INCLUDE_FILTER
+declare_member(class_name,create_filtered,class_name,cflt)
+ROUTINE create_filtered(kd_data : PATH nodedata = KDTREE_DATA_TYPE; coord_frame : XYZWPR) FROM class_name
+%endif
 declare_member(class_name,new_generator,class_name,ngen)
 ROUTINE new_generator(typ : INTEGER) FROM class_name
 declare_member(class_name,next,class_name,next)

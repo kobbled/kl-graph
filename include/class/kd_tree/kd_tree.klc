@@ -469,6 +469,41 @@ ROUTINE create
     
   END create
 
+%ifdef INCLUDE_FILTER
+ROUTINE create_filtered
+  VAR
+    i : INTEGER
+    ret : INTEGER
+    status : INTEGER
+    b : BOOLEAN
+  BEGIN
+    clear
+    frm = coord_frame
+
+    --index original data in hash table
+    `HASH_CLASS_NAME`__init(hmap)
+    FOR i=1 TO PATH_LEN(kd_data) DO
+      b = `HASH_CLASS_NAME`__put(user_string(kd_data[i]), i, hmap)
+      IF NOT b THEN
+        karelError(INVALID_INDEX,'Could not hash index:' + i_to_s(i) + ' in kd tree', ER_ABORT)
+      ENDIF
+    ENDFOR
+
+    --filter data
+    filter(kd_data, data)
+
+    --build kd tree. data will be sorted.
+    ret = build_tree(1, PATH_LEN(data), 0)
+
+    --copy original unsorted data
+    COPY_PATH(kd_data, 0, 0, data, status)
+
+    --deallocate hash
+    `HASH_CLASS_NAME`__destructor(hmap)
+
+  END create_filtered
+%endif
+
 ROUTINE new_generator
   BEGIN
     reset_generator
@@ -596,9 +631,28 @@ ROUTINE kNN_brute_force
     status : INTEGER
     dist : KDTREE_COMPARE_TYPE
     inserted : BOOLEAN
+%ifdef INCLUDE_FILTER
+    b : BOOLEAN
+%endif
   BEGIN
+%ifdef INCLUDE_FILTER
+  --index original data in hash table
+  `HASH_CLASS_NAME`__init(hmap)
+  FOR i=1 TO PATH_LEN(list) DO
+    b = `HASH_CLASS_NAME`__put(user_string(list[i]), i, hmap)
+    IF NOT b THEN
+      karelError(INVALID_INDEX,'Could not hash index:' + i_to_s(i) + ' in kd tree', ER_ABORT)
+    ENDIF
+  ENDFOR
+
+  --filter data
+  clear_data(data)
+  filter(list, data)
+%else
     --copy data into object
     COPY_PATH(list, 0, 0, data, status)
+%endif
+
     clear_query
     --fill query with kth nodes. Set 1st index for insert
     FOR i=1 TO k DO
@@ -617,7 +671,11 @@ ROUTINE kNN_brute_force
         WHILE((j<=PATH_LEN(query)) AND (NOT inserted)) DO
           IF dist < query[j].value THEN
             INSERT_NODE(query, j, status)
+%ifdef INCLUDE_FILTER
+            b = `HASH_CLASS_NAME`__get(user_string(data[i]), query[j].idx, hmap)
+%else
             query[j].idx = i
+%endif
             query[j].value = dist
             DELETE_NODE(query, PATH_LEN(query), status)
             inserted = TRUE
@@ -626,6 +684,11 @@ ROUTINE kNN_brute_force
         ENDWHILE
       ENDIF
     ENDFOR
+
+%ifdef INCLUDE_FILTER
+    --deallocate hash
+    `HASH_CLASS_NAME`__destructor(hmap)
+%endif
 
     -- return query
   END kNN_brute_force
@@ -652,9 +715,29 @@ ROUTINE rNN_brute_force
     status : INTEGER
     dist : KDTREE_COMPARE_TYPE
     inserted : BOOLEAN
+%ifdef INCLUDE_FILTER
+    b : BOOLEAN
+%endif
   BEGIN
+
+%ifdef INCLUDE_FILTER
+  --index original data in hash table
+  `HASH_CLASS_NAME`__init(hmap)
+  FOR i=1 TO PATH_LEN(list) DO
+    b = `HASH_CLASS_NAME`__put(user_string(list[i]), i, hmap)
+    IF NOT b THEN
+      karelError(INVALID_INDEX,'Could not hash index:' + i_to_s(i) + ' in kd tree', ER_ABORT)
+    ENDIF
+  ENDFOR
+
+  --filter data
+  clear_data(data)
+  filter(list, data)
+%else
     --copy data into object
     COPY_PATH(list, 0, 0, data, status)
+%endif
+
     clear_query
     
     --dummy placement node
@@ -671,7 +754,11 @@ ROUTINE rNN_brute_force
         WHILE((j<=PATH_LEN(query)) AND (NOT inserted)) DO
           IF dist < query[j].value THEN
             INSERT_NODE(query, j, status)
+%ifdef INCLUDE_FILTER
+            b = `HASH_CLASS_NAME`__get(user_string(data[i]), query[j].idx, hmap)
+%else
             query[j].idx = i
+%endif
             query[j].value = dist
             inserted = TRUE
           ENDIF
@@ -682,6 +769,11 @@ ROUTINE rNN_brute_force
 
     --remove last node, as it is only a dummy placement
     DELETE_NODE(query, PATH_LEN(query), status)
+
+%ifdef INCLUDE_FILTER
+    --deallocate hash
+    `HASH_CLASS_NAME`__destructor(hmap)
+%endif
     
     -- return query
 
