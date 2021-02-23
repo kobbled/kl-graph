@@ -1,4 +1,6 @@
 
+%define KD_CONFIG_FILE default_kd_dist.klt
+
 %define KDTREE_DATA_TYPE t_VECTOR
 %define KDTREE_NODE_NAME v
 %define KDTREE_VALUE_TYPE VECTOR
@@ -8,6 +10,17 @@
 %define KDTREE_QUERY_TYPE T_KDQUEUE
 
 %define DIMENSIONS 2
+
+--hash table
+------------------
+%defeval HASH_CLASS_NAME hshint
+%include hashint.klt
+
+%mode push
+%mode string QQQ "`" "`" "\\"
+%define define_hash(object_name,cnfg_file) `%class object_name('hashpath.klc','hashpath.klh','cnfg_file')`
+%mode pop
+------------------
 
 %mode push
 %mode string QQQ "`" "`" "\\"

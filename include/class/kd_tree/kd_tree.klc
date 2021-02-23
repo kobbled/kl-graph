@@ -4,6 +4,9 @@ PROGRAM class_name
 %NOLOCKGROUP
 %NOPAUSE = COMMAND + TPENABLE + ERROR
 
+-- declare type
+%include define_type.m
+
 %defeval BASE_CLASSNAME class_name
 
 %include errors.klt
@@ -14,17 +17,38 @@ PROGRAM class_name
 %include kd_tree.klt
 define_kd_types(KDTREE_QUERY_TYPE,class_name,KDTREE_COMPARE_TYPE)
 
+%define BASE_CLASSNAME class_name
+
+%ifdef USER_DEFINED_TYPES
+%mode push
+%mode quote "$"
+%eval $%include USER_DEFINED_TYPES$
+%mode pop
+%endif
+
+--hash to keep track of sorted and filtered data
+%include hashpath.klt
+hash_header_define(HASH_CLASS_NAME)
+t_hash(hashname,hval_def,HASH_CLASS_NAME)
 
 VAR
   this : PATH pathheader = HDR_BST, nodedata = T_BST
   data : PATH nodedata = KDTREE_DATA_TYPE
+  hmap : PATH pathheader = t_linear_hsh, nodedata = hashname
   traverse : PATH nodedata = t_INTEGER
   current : INTEGER
   query : PATH nodedata = KDTREE_QUERY_TYPE
   frm : XYZWPR
 
 %include errors.klh
+%from strings.klh %import i_to_s, r_to_s, rarr_to_s, iarr_to_s, pose_to_s, vec_to_s, joint_to_s
 %from math.klh %import ceil, manhattan_dist, norm, norm2
+
+--hash table object
+define_hash(HASH_CLASS_NAME,KD_CONFIG_FILE)
+
+%defeval class_name BASE_CLASSNAME
+
 %include kd_tree.klh
 %include kd_tree.private.klh
 --include user defined members
@@ -193,7 +217,9 @@ ROUTINE bubblesort
 
 ROUTINE build_tree
   VAR
+    idx : INTEGER
     mid : INTEGER
+    b : BOOLEAN
   BEGIN
     IF data_start > data_end THEN
       new_node(data_end)
@@ -203,15 +229,25 @@ ROUTINE build_tree
     bubblesort(data, data_start, data_end, (depth MOD DIMENSIONS) + 1)
     mid = TRUNC((data_start + data_end)/2)
 
-    IF this.root = 0 THEN
-      this.root = mid
+    --find mid in hash table
+    b = `HASH_CLASS_NAME`__get(user_string(data[mid]), idx, hmap)
+
+    IF NOT b THEN
+      karelError(INVALID_INDEX,'Could not find hash '+ vec_to_s(data[mid].v,',') +' while building kd tree', ER_ABORT)
     ENDIF
 
-    new_node(mid)
-    this[mid].right = build_tree(data_start, mid-1, depth+1)
-    this[mid].left = build_tree(mid+1, data_end, depth+1)
+    IF this.root = 0 THEN
+      this.root = idx
+    ENDIF
 
-    RETURN(mid)
+    new_node(idx)
+    this[idx].right = build_tree(data_start, mid-1, depth+1)
+    this[idx].left = build_tree(mid+1, data_end, depth+1)
+
+    IF (this[idx].right = idx) THEN this[idx].right = 0 ; ENDIF
+    IF (this[idx].left = idx) THEN this[idx].left = 0 ; ENDIF
+
+    RETURN(idx)
 
   END build_tree
 
@@ -402,15 +438,35 @@ ROUTINE clear
 
 ROUTINE create
   VAR
+    i : INTEGER
     ret : INTEGER
     status : INTEGER
+    b : BOOLEAN
   BEGIN
     clear
     frm = coord_frame
-    --copy data into class. A copy is made as data needs
-    --to be sorted to be used in a kd tree
+
+    --copy data
     COPY_PATH(kd_data, 0, 0, data, status)
+
+    --index original data in hash table
+    `HASH_CLASS_NAME`__init(hmap)
+    FOR i=1 TO PATH_LEN(data) DO
+      b = `HASH_CLASS_NAME`__put(user_string(data[i]), i, hmap)
+      IF NOT b THEN
+        karelError(INVALID_INDEX,'Could not hash index:' + i_to_s(i) + ' in kd tree', ER_ABORT)
+      ENDIF
+    ENDFOR
+
+    --build kd tree. data will be sorted.
     ret = build_tree(1, PATH_LEN(data), 0)
+
+    --copy original unsorted data
+    COPY_PATH(kd_data, 0, 0, data, status)
+
+    --deallocate hash
+    `HASH_CLASS_NAME`__destructor(hmap)
+    
   END create
 
 ROUTINE new_generator
