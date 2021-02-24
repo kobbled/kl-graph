@@ -11,7 +11,7 @@ PROGRAM class_name
 %include systemvars.klt
 
 %include kd_tree.klt
-define_kd_types(KD_CLASS_NAME,KDTREE_COMPARE_TYPE)
+define_kd_types(T_KDQUEUE,KD_CLASS_NAME,KDTREE_COMPARE_TYPE)
 %include graph.klt
 graph_type_define(GRAPH_CLASS_NAME)
 
@@ -265,7 +265,7 @@ ROUTINE MST
 
 ROUTINE NN_graph
   VAR
-    neigh : ARRAY[TSP_GRAPH_MAX_NEIGHBORS] OF T_KTQUEUE
+    neigh : ARRAY[TSP_GRAPH_MAX_NEIGHBORS] OF KDTREE_QUERY_TYPE
     prnt, child :  GRAPH_ADJ_TYPE
     i,j : INTEGER
   BEGIN
