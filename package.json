@@ -15,9 +15,9 @@
     "include/class/TSP"
   ],
   "tests" : [
+    "test/test_tsp.kl",
     "test/test_graph.kl",
-    "test/test_kd_tree.kl",
-    "test/test_tsp.kl"
+    "test/test_kd_tree.kl"
   ],
   "depends" : [
     "errors",
@@ -25,9 +25,12 @@
     "queue",
     "math",
     "Hash",
-    "display",
-    "paths",
     "ktransw-macros",
     "systemlib"
+  ],
+  "tests-depends" : [
+    "display",
+    "paths",
+    "KUnit"
   ]
 }
