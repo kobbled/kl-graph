@@ -21,6 +21,8 @@ declare_member(class_name,get_adjacencies,class_name,gadj)
 ROUTINE get_adjacencies(nde : INTEGER) : GRAPH_ADJ_LIST_NAME FROM class_name
 declare_member(class_name,put_adjacencies,class_name,padj)
 ROUTINE put_adjacencies(nde : INTEGER ; adj : GRAPH_ADJ_LIST_NAME) FROM class_name
+declare_member(class_name,change_directional,class_name,cdir)
+ROUTINE change_directional(dir : BOOLEAN) FROM class_name
 declare_member(class_name,DFS,class_name,dfs)
 -- start_node = 0 will perform on entire graph
 ROUTINE DFS(start_node : INTEGER ; pth : PATH nodedata = t_INTEGER) FROM class_name

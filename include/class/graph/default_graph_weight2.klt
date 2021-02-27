@@ -1,0 +1,85 @@
+%define CONFIG_FILENAME default_graph_weight2.klt
+--maximum number of adjacencies per node
+%define MAX_NEIGHBORS 5
+
+%define GRAPH_TYPE t_graph_wt
+%define GRAPH_NODE_NAME id
+%define GRAPH_NODE_TYPE SHORT
+--SHORT and BYTE types must be passed as INTEGER
+--into routines
+%define GRAPH_NODE_VTYPE INTEGER
+
+%define GRAPH_ADJ_LIST_NAME t_adj_wt
+%define GRAPH_ADJ_TYPE t_edge_wt
+--optional: exclude if not using edge weights
+--must update adjacency type to exclude
+--weights
+%define GRAPH_EDGE_NAME wt
+%define GRAPH_EDGE_TYPE SHORT
+--SHORT and BYTE types must be passed as INTEGER
+--into routines
+%define GRAPH_EDGE_VTYPE INTEGER
+--max value for edge weight
+%include systemlib.c.klt
+%defeval GRAPH_MAX_COST DEFAULT_SHORT
+
+
+--graph type
+%mode push
+%mode string QQQ "`" "`" "\\"
+
+--type definition for nodes
+%define graph_type_define(parent) `TYPE
+  GRAPH_ADJ_TYPE FROM parent = STRUCTURE
+    GRAPH_NODE_NAME : GRAPH_NODE_TYPE
+    GRAPH_EDGE_NAME : GRAPH_EDGE_TYPE
+  ENDSTRUCTURE
+
+  GRAPH_ADJ_LIST_NAME FROM parent = ARRAY[MAX_NEIGHBORS] OF GRAPH_ADJ_TYPE
+
+  GRAPH_TYPE FROM parent = STRUCTURE
+    --edges
+    adj : GRAPH_ADJ_LIST_NAME
+  ENDSTRUCTURE
+
+  TRACKED_TYPE FROM parent = STRUCTURE
+    prev_node : GRAPH_NODE_TYPE
+    cost_so_far : GRAPH_EDGE_TYPE
+  ENDSTRUCTURE
+  `
+
+--MUST DEFINE for creating new nodes
+%define define_graphs_headers(parent) `declare_member(parent,new_node,parent,nnde)
+ROUTINE new_node(id : INTEGER) : GRAPH_ADJ_TYPE FROM parent
+declare_member(parent,addEdge,parent,aedg)
+ROUTINE addEdge(prnt_id : INTEGER; child_id : INTEGER; wt : GRAPH_EDGE_VTYPE) FROM parent
+`
+%define define_graph_members(parent) `declare_member(parent,new_node,parent,nnde)
+ROUTINE new_node(id : INTEGER) : GRAPH_ADJ_TYPE
+  VAR
+    nde : GRAPH_ADJ_TYPE
+  BEGIN
+    nde.GRAPH_NODE_NAME = id ;
+    nde.GRAPH_EDGE_NAME = 0 ;
+    RETURN( nde )
+  END new_node
+declare_member(parent,addEdge,parent,aedg)
+ROUTINE addEdge(prnt_id : INTEGER; child_id : INTEGER; wt : GRAPH_EDGE_VTYPE)
+  VAR
+    prnt_nde, child_nde : GRAPH_ADJ_TYPE
+  BEGIN
+    prnt_nde.GRAPH_NODE_NAME = prnt_id
+    child_nde.GRAPH_NODE_NAME = child_id
+    --add weight
+    child_nde.GRAPH_EDGE_NAME = wt
+    insert_adj((prnt_nde.GRAPH_NODE_NAME), child_nde)
+    --directional graph
+    IF NOT this.directional THEN
+      --add weight
+      prnt_nde.GRAPH_EDGE_NAME = wt
+      insert_adj((child_nde.GRAPH_NODE_NAME), prnt_nde)
+    ENDIF
+  END addEdge
+  `
+
+%mode pop
