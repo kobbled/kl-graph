@@ -85,23 +85,60 @@ ROUTINE reset_visited
     ENDFOR
   END reset_visited
 
-ROUTINE append_adj
+%ifdef GRAPH_EDGE_NAME
+--append for weighted graphs
+ROUTINE insert_adj
+  VAR
+    i,j : INTEGER
+    b : BOOLEAN
+  BEGIN
+    b = FALSE
+    i = 1
+    IF NOT UNINIT(this[id].adj[i].GRAPH_NODE_NAME) THEN
+    REPEAT
+      --if node is already added. check weight. replace if new
+      --edge is lower.
+      IF (data.GRAPH_NODE_NAME = this[id].adj[i].GRAPH_NODE_NAME) THEN 
+        IF (data.GRAPH_EDGE_NAME < this[id].adj[i].GRAPH_EDGE_NAME) THEN
+          this[id].adj[i] = data
+        ENDIF
+        b = TRUE
+      ENDIF
+      i = i + 1
+    UNTIL(UNINIT(this[id].adj[i].GRAPH_NODE_NAME) OR (i = ARRAY_LEN(this[id].adj)) )
+    ENDIF
+
+    IF (i = ARRAY_LEN(this[id].adj)) AND (NOT b) THEN
+      -- no free slot in adjacency list
+      karelError(INVALID_INDEX,'class_name node ' + i_to_s(id) + ' adjacency list is full.', ER_ABORT)
+    ENDIF
+
+    --add weight at end of array if new edge.
+    IF NOT b THEN
+      this[id].adj[i] = data
+    ENDIF
+
+  END insert_adj
+%else
+--append for unweighted graphs
+ROUTINE insert_adj
   VAR
     i : INTEGER
-    adj : GRAPH_ADJ_TYPE
   BEGIN
     FOR i=1 TO ARRAY_LEN(this[id].adj) DO
-      adj = this[id].adj[i]
-      IF (UNINIT(adj.GRAPH_NODE_NAME)) THEN
+      IF (UNINIT(this[id].adj[i].GRAPH_NODE_NAME)) THEN
         this[id].adj[i] = data
-        RETURN ;
+        RETURN
+      ELSE IF (data.GRAPH_NODE_NAME = this[id].adj[i].GRAPH_NODE_NAME) THEN
+        RETURN
+      ENDIF
       ENDIF
     ENDFOR
 
     -- no free slot in adjacency list
     karelError(INVALID_INDEX,'class_name node ' + i_to_s(id) + ' adjacency list is full.', ER_ABORT)
-
-  END append_adj
+  END insert_adj
+%endif
 
 ROUTINE DFSUtil
   VAR

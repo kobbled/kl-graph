@@ -68,12 +68,12 @@ ROUTINE addEdge(prnt_nde : GRAPH_ADJ_TYPE; child_nde : GRAPH_ADJ_TYPE; wt : GRAP
   BEGIN
     --add weight
     child_nde.GRAPH_EDGE_NAME = wt
-    append_adj((prnt_nde.GRAPH_NODE_NAME), child_nde)
+    insert_adj((prnt_nde.GRAPH_NODE_NAME), child_nde)
     --directional graph
     IF NOT this.directional THEN
       --add weight
       prnt_nde.GRAPH_EDGE_NAME = wt
-      append_adj((child_nde.GRAPH_NODE_NAME), prnt_nde)
+      insert_adj((child_nde.GRAPH_NODE_NAME), prnt_nde)
     ENDIF
   END addEdge
   `

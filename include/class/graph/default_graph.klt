@@ -45,10 +45,10 @@ ROUTINE new_node(id : INTEGER) : GRAPH_ADJ_TYPE
 declare_member(parent,addEdge,parent,aedg)
 ROUTINE addEdge(prnt_nde : GRAPH_ADJ_TYPE; child_nde : GRAPH_ADJ_TYPE)
   BEGIN
-    append_adj((prnt_nde.GRAPH_NODE_NAME), child_nde)
+    insert_adj((prnt_nde.GRAPH_NODE_NAME), child_nde)
     --directional graph
     IF NOT this.directional THEN
-      append_adj((child_nde.GRAPH_NODE_NAME), prnt_nde)
+      insert_adj((child_nde.GRAPH_NODE_NAME), prnt_nde)
     ENDIF
 
   END addEdge
