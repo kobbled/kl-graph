@@ -1,7 +1,9 @@
-%define TSP_DATA_TYPE t_VECTOR
+%define USER_DEFINED_TYPES paths.klt
+
+%define TSP_DATA_TYPE t_VEC_PATH
 %define TSP_DATA_NAME v
 %define TSP_NODE_TYPE VECTOR
-%define TSP_CONFIG_FILE default_tsp.klt
+%define TSP_CONFIG_FILE tsp_vec_path.klt
 
 %mode push
 %mode string QQQ "`" "`" "\\"
@@ -20,7 +22,7 @@ ROUTINE dist_to_weight(dist : KDTREE_COMPARE_TYPE) : GRAPH_EDGE_VTYPE
 --kd tree
 ------------------
 %defeval KD_CLASS_NAME tspkd
-%include default_kd_dist.klt
+%include kd_vec_path.klt
 
 %mode push
 %mode string QQQ "`" "`" "\\"

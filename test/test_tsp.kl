@@ -66,6 +66,7 @@ ROUTINE t_NN : BOOLEAN
   END t_NN
 
 BEGIN
+
   kunit_test('test nearest neighbors path', t_NN)
   kunit_done
 END test_tsp

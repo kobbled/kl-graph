@@ -11,17 +11,24 @@ PROGRAM class_name
 %include systemvars.klt
 
 %include kd_tree.klt
-define_kd_types(T_KDQUEUE,KD_CLASS_NAME,KDTREE_COMPARE_TYPE)
+define_kd_types(KDTREE_QUERY_TYPE,KD_CLASS_NAME,KDTREE_COMPARE_TYPE)
 %include graph.klt
 graph_type_define(GRAPH_CLASS_NAME)
 
 %define BASE_CLASSNAME class_name
 
+%ifdef USER_DEFINED_TYPES
+%mode push
+%mode quote "$"
+%eval $%include USER_DEFINED_TYPES$
+%mode pop
+%endif
+
 VAR
-  data : PATH nodedata = TSP_DATA_TYPE
-  visited : PATH nodedata = t_BOOL
-  tracked : PATH nodedata = TRACKED_TYPE
   frm : XYZWPR
+  data : PATH nodedata = TSP_DATA_TYPE
+  tracked : PATH nodedata = TRACKED_TYPE
+  visited : PATH nodedata = t_BOOL
 
 %include errors.klh
 %from strings.klh %import i_to_s
@@ -78,7 +85,7 @@ ROUTINE reset_visited
     ENDFOR
   END reset_visited
 
-  ROUTINE clear_tracked
+ROUTINE clear_tracked
   VAR
     i : INTEGER
     status : INTEGER
@@ -109,6 +116,7 @@ ROUTINE update_unvisited
       IF visited[i].v = FALSE THEN
         tracked[i].cost_so_far = dist_to_weight(`KD_CLASS_NAME`__distance(nde, data[i]))
       ELSE
+        --reset tracked of visited nodes to avoid. 
         tracked[i].cost_so_far = GRAPH_MAX_COST
       ENDIF
     ENDFOR
@@ -117,9 +125,9 @@ ROUTINE update_unvisited
 ROUTINE min_tracked
   VAR
     i : INTEGER
-    adj_list : GRAPH_ADJ_LIST_NAME
-    min_val : GRAPH_EDGE_VTYPE
     min_idx : INTEGER
+    min_val : GRAPH_EDGE_VTYPE
+    adj_list : GRAPH_ADJ_LIST_NAME
   BEGIN
     --get adjacency list
     adj_list = `GRAPH_CLASS_NAME`__get_adjacencies(nde_i)
@@ -265,33 +273,27 @@ ROUTINE MST
 
 ROUTINE NN_graph
   VAR
-    neigh : ARRAY[TSP_GRAPH_MAX_NEIGHBORS] OF KDTREE_QUERY_TYPE
-    prnt, child :  GRAPH_ADJ_TYPE
+    neigh : ARRAY[MAX_NEIGHBORS] OF KDTREE_QUERY_TYPE
     i,j : INTEGER
   BEGIN
     --create kd tree
     `KD_CLASS_NAME`__create(data, (frm))
-    --data needs to be sorted in kd tree. copy sorted path
-    --to retrieve correct indicies while graphing.
-    `KD_CLASS_NAME`__copy_data(data)
 
     --initalize graph
-    `GRAPH_CLASS_NAME`__new(PATH_LEN(data),TRUE)
+    `GRAPH_CLASS_NAME`__new(PATH_LEN(data),FALSE)
     
     --Find kth nearest neighbors for all nodes and build out graph
     FOR i=1 TO PATH_LEN(data) DO
       `KD_CLASS_NAME`__kth_nearest_neighbors(data[i], k)
-      `KD_CLASS_NAME`__get_query_idx(neigh)
+      neigh = `KD_CLASS_NAME`__get_query_idx
 
-      prnt = `GRAPH_CLASS_NAME`__new_node(i)
       j=1
       --add all neighbors as weighted edged to graph
       IF (NOT UNINIT(neigh[j].idx)) THEN
       REPEAT
-        child = `GRAPH_CLASS_NAME`__new_node(neigh[j].idx)
-        `GRAPH_CLASS_NAME`__addEdge(prnt, child, dist_to_weight(neigh[j].value))
+        `GRAPH_CLASS_NAME`__addEdge(i, (neigh[j].idx), dist_to_weight(neigh[j].value))
         j = j + 1
-      UNTIL(UNINIT(neigh[j].idx) OR (j = TSP_GRAPH_MAX_NEIGHBORS ) )
+      UNTIL(UNINIT(neigh[j].idx) OR (j = MAX_NEIGHBORS ) )
       ENDIF
     ENDFOR
 
