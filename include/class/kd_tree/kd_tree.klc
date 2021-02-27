@@ -107,7 +107,6 @@ ROUTINE clear_query
     i = PATH_LEN(query)
     WHILE PATH_LEN(query) > 0 DO
 		  DELETE_NODE(query,i,status)
-      CHK_STAT(status)
       i = i - 1
 	  ENDWHILE
   END clear_query
@@ -587,15 +586,21 @@ ROUTINE get_query_arr
 
 ROUTINE get_query_idx
   VAR
-    i, status : INTEGER
+    i, j, status : INTEGER
+%ifndef MAX_NEIGHBORS
+%define MAX_NEIGHBORS 5
+%endif
+    neigh : ARRAY[MAX_NEIGHBORS] OF KDTREE_QUERY_TYPE
   BEGIN
-    IF ARRAY_LEN(out_idx) < PATH_LEN(query) THEN
-      karelError(ARR_LEN_MISMATCH,'output array is not large enough to contain query', ER_ABORT)
+    IF ARRAY_LEN(neigh) < PATH_LEN(query) THEN
+      karelError(ARR_LEN_MISMATCH,'Cant export query. Increase MAX_NEIGHBORS for get_query_idx.', ER_ABORT)
     ENDIF
 
     FOR i=1 TO PATH_LEN(query) DO
-      out_idx[i] = query[i]
+      neigh[i] = query[i]
     ENDFOR
+
+    RETURN(neigh)
   END get_query_idx
 
 ROUTINE findmin

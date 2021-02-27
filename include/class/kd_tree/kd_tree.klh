@@ -30,7 +30,7 @@ ROUTINE get_query(out_list : PATH nodedata = KDTREE_DATA_TYPE) FROM class_name
 declare_member(class_name,get_query_arr,class_name,gqra)
 ROUTINE get_query_arr(out_arr : ARRAY OF KDTREE_VALUE_TYPE) FROM class_name
 declare_member(class_name,get_query_idx,class_name,gqri)
-ROUTINE get_query_idx(out_idx : ARRAY OF KDTREE_QUERY_TYPE) FROM class_name
+ROUTINE get_query_idx : ARRAY OF KDTREE_QUERY_TYPE FROM class_name
 declare_member(class_name,findmin,class_name,fmin)
 ROUTINE findmin(dimension : INTEGER) : KDTREE_DATA_TYPE FROM class_name
 declare_member(class_name,findmax,class_name,fmax)
