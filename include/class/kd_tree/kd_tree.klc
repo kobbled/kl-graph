@@ -4,6 +4,8 @@ PROGRAM class_name
 %NOLOCKGROUP
 %NOPAUSE = COMMAND + TPENABLE + ERROR
 
+%define EPSILON 0.001
+
 -- declare type
 %include define_type.m
 
@@ -39,6 +41,7 @@ VAR
   current : INTEGER
   query : PATH nodedata = KDTREE_QUERY_TYPE
   frm : XYZWPR
+  query_flag : BOOLEAN 
 
 %include errors.klh
 %from strings.klh %import i_to_s, r_to_s, rarr_to_s, iarr_to_s, pose_to_s, vec_to_s, joint_to_s
@@ -349,7 +352,7 @@ ROUTINE kNNUtil
     ENDIF
 
     -- append node to query list
-    IF query_filter(point, data[root]) THEN
+    IF query_flag OR query_filter(point, data[root]) THEN
       i = 1
       inserted = FALSE
       dist = distance(point, data[root])
@@ -393,7 +396,7 @@ ROUTINE rNNUtil
 
     dist = distance(point, data[root])
     -- append node to query list
-    IF (dist < radius) AND query_filter(point, data[root]) THEN
+    IF (dist < radius) AND (query_flag OR query_filter(point, data[root])) THEN
       i = 1
       inserted = FALSE
       WHILE((i<=PATH_LEN(query)) AND (NOT inserted)) DO
@@ -433,6 +436,7 @@ ROUTINE clear
     clear_query
 
     current = 0
+    query_flag = FALSE
   END clear
 
 ROUTINE create
@@ -444,6 +448,7 @@ ROUTINE create
   BEGIN
     clear
     frm = coord_frame
+    query_flag = FALSE
 
     --copy data
     COPY_PATH(kd_data, 0, 0, data, status)
@@ -478,6 +483,7 @@ ROUTINE create_filtered
   BEGIN
     clear
     frm = coord_frame
+    query_flag = FALSE
 
     --index original data in hash table
     `HASH_CLASS_NAME`__init(hmap)
@@ -603,6 +609,16 @@ ROUTINE get_query_idx
     RETURN(neigh)
   END get_query_idx
 
+ROUTINE enable_search_filter
+  BEGIN
+    query_flag = FALSE
+  END enable_search_filter
+
+ROUTINE disable_search_filter
+  BEGIN
+    query_flag = TRUE
+  END disable_search_filter
+
 ROUTINE findmin
   BEGIN
     RETURN(data[minmaxUtil(this.root, 0, dimension, LESS_THAN)])
@@ -669,7 +685,7 @@ ROUTINE kNN_brute_force
 
     FOR i=1 TO PATH_LEN(data) DO
       -- append node to query list
-      IF query_filter(point, data[i]) THEN
+      IF query_flag OR query_filter(point, data[i]) THEN
         j = 1
         inserted = FALSE
         dist = distance(point, data[i])
@@ -753,7 +769,7 @@ ROUTINE rNN_brute_force
     FOR i=1 TO PATH_LEN(data) DO
       dist = distance(point, data[i])
       -- append node to query list
-      IF (dist < radius) AND query_filter(point, data[i]) THEN
+      IF (dist < radius) AND (query_flag OR query_filter(point, data[i])) THEN
         j = 1
         inserted = FALSE
         WHILE((j<=PATH_LEN(query)) AND (NOT inserted)) DO
