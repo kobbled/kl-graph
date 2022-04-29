@@ -205,7 +205,7 @@ ROUTINE destructor
     clear_tracked
 
     `KD_CLASS_NAME`__clear
-    `GRAPH_CLASS_NAME`__destructor
+    `GRAPH_CLASS_NAME`__delete
   END destructor
 
 ROUTINE append

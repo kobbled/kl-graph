@@ -272,14 +272,14 @@ ROUTINE new
     this.directional = directional
   END new
 
-ROUTINE destructor
+ROUTINE delete
   BEGIN
     clear_graph
     clear_visited
 %ifdef GRAPH_EDGE_NAME
     clear_tracked
 %endif
-  END destructor
+  END delete
 
 ROUTINE append
   VAR
