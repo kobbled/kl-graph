@@ -1,4 +1,4 @@
-%define USER_DEFINED_TYPES paths.klt
+%define USER_DEFINED_TYPES pathlib.klt
 
 %define TSP_DATA_TYPE t_VEC_PATH
 %define TSP_DATA_NAME v

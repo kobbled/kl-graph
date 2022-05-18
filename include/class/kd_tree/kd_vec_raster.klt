@@ -1,7 +1,7 @@
 
 %define KD_CONFIG_FILE kd_vec_raster.klt
 
-%define USER_DEFINED_TYPES paths.klt
+%define USER_DEFINED_TYPES pathlib.klt
 
 %define KDTREE_DATA_TYPE t_VEC_PATH
 %define KDTREE_NODE_NAME v

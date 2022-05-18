@@ -26,11 +26,11 @@
     "math",
     "Hash",
     "ktransw-macros",
+    "pathlib",
     "systemlib"
   ],
   "tests-depends" : [
     "display",
-    "paths",
     "KUnit"
   ]
 }

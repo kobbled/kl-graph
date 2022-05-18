@@ -8,7 +8,7 @@ PROGRAM test_kd_tree
 %include kd_tree.klt
 define_kd_types(T_KDQUEUE,tstkd,REAL)
 
-%include paths.klt
+%include pathlib.klt
 define_kd_types(T_QUEUE_PTH,tkdph,REAL)
 
 VAR
