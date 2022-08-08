@@ -1,7 +1,7 @@
 PROGRAM test_kd_tree
 %NOLOCKGROUP
 
-%include systemlib.klt
+%include systemlib.types.klt
 %include systemvars.klt
 %include binary_tree.c.klt
 

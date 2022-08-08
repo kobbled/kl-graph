@@ -20,7 +20,7 @@
 --into routines
 %define GRAPH_EDGE_VTYPE INTEGER
 --max value for edge weight
-%include systemlib.c.klt
+%include systemlib.macros.klt
 %defeval GRAPH_MAX_COST DEFAULT_SHORT
 
 

@@ -6,7 +6,8 @@ PROGRAM class_name
 
 %defeval BASE_CLASSNAME class_name
 
-%include systemlib.klt
+%include systemlib.macros.klt
+%include systemlib.types.klt
 
 %include errors.klt
 

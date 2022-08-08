@@ -7,7 +7,7 @@ PROGRAM class_name
 %include namespace.m
 
 %include errors.klt
-%include systemlib.klt
+%include systemlib.types.klt
 %include systemvars.klt
 
 %include kd_tree.klt
